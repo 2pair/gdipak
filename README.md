@@ -1,2 +1,2 @@
 # gdipak
- renames dreamcast *gdi. and related files for gdemu compatibility
+ renames dreamcast *.gdi and related files for gdemu compatibility
