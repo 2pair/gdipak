@@ -1,14 +1,60 @@
 """What is this and what does it do"""
 
-__version__ = 1.0
+__version__ = 0.1
 
 import argparse
+import os
+import sys
+import fnmatch
 import re
 
+class gdipak:
+    """ Searches in a given directory for files relevent to the gdi format
+        arguments:  A directory to search in
+        returns:    A  list of file names or None if no files found
+    """
+    def get_files(self, directory):
+        files = list()
+        with os.scandir(directory) as itr:
+            for item in itr:
+                if not item.is_file():
+                    continue
+                if fnmatch.fnmatch(item.name, "*.gdi"):
+                    files.append(item.name)
+                if fnmatch.fnmatch(item.name, "*.bin"):
+                    files.append(item.name)
+
+        return files
+
+""" Validates the supplied arguments. Exits on failure
+    arguments:  A dictionary of args from argparse
+    returns:    None"""
+def validate_args(args):
+    if args["in_dir"] is not None:
+        fail_msg = "Input directory is not a directory"
+        try:
+            if not os.path.isdir(args["in_dir"]):
+                print(fail_msg)
+                sys.exit(0)
+        except FileNotFoundError:
+            print(fail_msg)
+            sys.exit(0)
+
+    if args["out_dir"] is not None:
+        fail_msg = "Output directory is not a directory"
+        try:
+            if not os.path.isdir(args["out_dir"]):
+                print(fail_msg)
+                sys.exit(0)
+        except FileNotFoundError:
+            print(fail_msg)
+            sys.exit(0)
+
+
 """ Creates the argument parser
-    arguments: None
-    returns: an instance of argparse.ArgumentParser"""
-def __setup_argparser():
+    arguments:  None
+    returns:    An instance of argparse.ArgumentParser"""
+def setup_argparser():
     parser = argparse.ArgumentParser(description=
         """Scans a directory and optionally subdirectories for *.gdi files 
         and the related *.bin files. creates new file names that conform 
@@ -45,20 +91,22 @@ def __setup_argparser():
 
     return parser
 
-
 """Normal execution when run as script"""
 def main():
-    parser = __setup_argparser()
+    parser = setup_argparser()
     args = vars(parser.parse_args())
+    validate_args(args)
 
     input_dir = args["in_dir"]
     recursive = args["recursive"]
     modify_files = True
     output_dir = input_dir
-    if "modify" not in args:
+    if "modify" not in args.keys():
         modify_files = False
         output_dir = args["out_dir"]
 
+    g = gdipak()
+    g.get_files(input_dir)
 
 if __name__ == "__main__":
     main()
