@@ -9,11 +9,13 @@ import fnmatch
 import re
 
 class gdipak:
-    """ Searches in a given directory for files relevent to the gdi format
+    """ Performs the stuff which do"""
+
+    def get_files_in_dir(self, directory):
+        """ Searches in a given directory for files relevent to the gdi format
         arguments:  A directory to search in
         returns:    A  list of file names or None if no files found
-    """
-    def get_files_in_dir(self, directory):
+        """
         files = list()
         with os.scandir(directory) as itr:
             for item in itr:
@@ -26,10 +28,11 @@ class gdipak:
 
         return files
 
-""" Validates the supplied arguments. Exits on failure
-    arguments:  A dictionary of args from argparse
-    returns:    None"""
 def validate_args(args):
+    """ Validates the supplied arguments. Exits on failure
+    arguments:  A dictionary of args from argparse
+    returns:    None
+    """
     if args["in_dir"] is not None:
         fail_msg = "Input directory is not a directory"
         try:
@@ -51,10 +54,11 @@ def validate_args(args):
             sys.exit(0)
 
 
-""" Creates the argument parser
+def setup_argparser():
+    """ Creates the argument parser
     arguments:  None
     returns:    An instance of argparse.ArgumentParser"""
-def setup_argparser():
+
     parser = argparse.ArgumentParser(description=
         """Scans a directory and optionally subdirectories for *.gdi files 
         and the related *.bin files. creates new file names that conform 
@@ -91,8 +95,9 @@ def setup_argparser():
 
     return parser
 
-"""Normal execution when run as script"""
 def main():
+    """Normal execution when run as script"""
+
     parser = setup_argparser()
     args = vars(parser.parse_args())
     validate_args(args)
