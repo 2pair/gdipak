@@ -13,7 +13,7 @@ class gdipak:
         arguments:  A directory to search in
         returns:    A  list of file names or None if no files found
     """
-    def get_files(self, directory):
+    def get_files_in_dir(self, directory):
         files = list()
         with os.scandir(directory) as itr:
             for item in itr:
