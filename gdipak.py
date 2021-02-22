@@ -1,4 +1,5 @@
-"""What is this and what does it do"""
+"""Parses GDI formatted game dumps and formats them for
+consumption by GDEMU"""
 
 __version__ = 0.1
 
@@ -9,11 +10,31 @@ import fnmatch
 import re
 
 class gdipak:
-    """ Performs the stuff which do"""
+    """Includes functions for finding and parsing files that are 
+    part of a .gdi game dump"""
+    valid_extensions = (".gdi", ".bin", ".raw")
+
+    def convert_filename(self, input_filename):
+        """ Based on the input filename generates an output filename
+        arguments:  A string representing a filename, with extension
+        returns:    A string that GDEMU expects for that file's name
+        """
+        name, ext = os.path.splitext(input_filename)
+        ext = ext.lower()
+        if not ext or ext not in self.valid_extensions:
+            raise ValueError("Invalid file type")
+        if ext == ".gdi":
+            return "disc.gdi"
+        regex = re.compile(r"^[\s\S]*track[\s\S]*?([\d]+)", re.IGNORECASE)
+        result = regex.match(name)
+        if not result:
+            raise SyntaxError("Filename does not contain track information")
+        return "track" + result.group(1).zfill(2) + ext
+
 
     def get_files_in_dir(self, directory):
         """ Searches in a given directory for files relevent to the gdi format
-        arguments:  A directory to search in
+        arguments:  A path-like object for a directory to search in
         returns:    A  list of file names or None if no files found
         """
         files = list()
@@ -21,12 +42,11 @@ class gdipak:
             for item in itr:
                 if not item.is_file():
                     continue
-                if fnmatch.fnmatch(item.name, "*.gdi"):
-                    files.append(item.name)
-                if fnmatch.fnmatch(item.name, "*.bin"):
-                    files.append(item.name)
-
+                for ext in self.valid_extensions:
+                    if fnmatch.fnmatch(item.name, "*" + ext):
+                        files.append(item.name)
         return files
+
 
 def validate_args(args):
     """ Validates the supplied arguments. Exits on failure
@@ -95,6 +115,7 @@ def setup_argparser():
 
     return parser
 
+
 def main():
     """Normal execution when run as script"""
 
@@ -111,7 +132,7 @@ def main():
         output_dir = args["out_dir"]
 
     g = gdipak()
-    g.get_files(input_dir)
+    g.get_files_in_dir(input_dir)
 
 if __name__ == "__main__":
     main()
