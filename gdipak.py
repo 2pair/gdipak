@@ -14,6 +14,22 @@ class gdipak:
     part of a .gdi game dump"""
     valid_extensions = (".gdi", ".bin", ".raw")
 
+    def write_file(self, input_file, output_file):
+        """ Generates a file with the given contents
+        arguments:  input_file: a path to a file from which to copy data 
+        output_file: a path to which to write the data
+        returns: None
+        """
+        in_dir = os.path.dirname(input_file)
+        out_dir = os.path.dirname(output_file)
+        if in_dir == out_dir:
+            os.rename(input_file, output_file)
+        else:
+            with open(input_file, 'rb') as f_in:
+                with open(output_file, 'wb') as f_out:
+                    f_out.write(f_in.read())
+
+
     def convert_filename(self, input_filename):
         """ Based on the input filename generates an output filename
         arguments:  A string representing a filename, with extension
@@ -123,16 +139,24 @@ def main():
     args = vars(parser.parse_args())
     validate_args(args)
 
-    input_dir = args["in_dir"]
+    in_dir = args["in_dir"]
     recursive = args["recursive"]
-    modify_files = True
-    output_dir = input_dir
+    #modify_files = True
+    out_dir = str()
     if "modify" not in args.keys():
-        modify_files = False
-        output_dir = args["out_dir"]
+        #modify_files = False
+        out_dir = args["out_dir"]
+    else:
+        out_dir = in_dir
 
     g = gdipak()
-    g.get_files_in_dir(input_dir)
+    files = g.get_files_in_dir(in_dir)
+    for in_file in files:
+        in_filename = os.path.basename(in_file)
+        out_filename = g.convert_filename(in_filename)
+        out_path = os.path.join(out_dir, out_filename)
+        g.write_file(in_file, out_file)
+
 
 if __name__ == "__main__":
     main()

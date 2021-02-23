@@ -101,3 +101,35 @@ class TestConvertFilename:
         g = gdipak()
         with pytest.raises(SyntaxError):
             result = g.convert_filename("Very Good Game.bin")
+
+class TestWriteFile:
+    def test_write_same_file(self, tmpdir):
+        io_dir = tmpdir.mkdir("Game!")
+        in_file = io_dir.join("Game!.gdi")
+        contents = b"This is the contents of the file"
+        in_file.write(contents)
+        
+        out_filename = os.path.join(io_dir, "disc.gdi")
+        g = gdipak()
+        g.write_file(in_file, out_filename)
+
+        #original file nolonger exists
+        assert(not in_file.check())
+        with open(out_filename, "br") as f:
+            assert(contents == f.read())
+
+    def test_write_different_file(self, tmpdir):
+        in_dir = tmpdir.mkdir("Game!")
+        in_file = in_dir.join("Game!.gdi")
+        in_file.write(b"This is the contents of the file")
+        
+        out_dir = tmpdir.mkdir("outputdir")
+        out_filename = os.path.join(out_dir, "disc.gdi")
+        g = gdipak()
+        g.write_file(in_file, out_filename)
+
+        #original file still exists
+        assert(in_file.check())
+        with open(in_file, "br") as f_in:
+            with open(out_filename, "br") as f_out:
+                assert(f_in.read() == f_out.read())
