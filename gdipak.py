@@ -14,12 +14,38 @@ class gdipak:
     part of a .gdi game dump"""
     valid_extensions = (".gdi", ".bin", ".raw")
 
+    def process_dir(self, in_dir, out_dir, recursive):
+        """ converts and copies or renames all files in a directory 
+        and optionally subdirectories.
+        arguments: The directory to process, the output directory, 
+        and if subdirectories should be processed
+        returns: None
+        """
+        files = self.get_files_in_dir(in_dir)
+        for in_file in files:
+            in_filename = os.path.basename(in_file)
+            out_filename = self.convert_filename(in_filename)
+            out_file = os.path.join(out_dir, out_filename)
+            self.write_file(in_file, out_file)
+
+        if recursive:
+            subdirs = self.get_subdirs_in_dir(in_dir)
+            for subdir in subdirs:
+                sub_outdir = str()
+                if in_dir == out_dir:
+                    sub_outdir = subdir
+                else:
+                    sub_outdir = os.path.join(out_dir, subdir)
+                self.process_dir(subdir, sub_outdir, recursive)
+
+
     def write_file(self, input_file, output_file):
         """ Generates a file with the given contents
         arguments:  input_file: a path to a file from which to copy data 
         output_file: a path to which to write the data
         returns: None
         """
+        #TODO: validate that path exists and create it if not
         in_dir = os.path.dirname(input_file)
         out_dir = os.path.dirname(output_file)
         if in_dir == out_dir:
@@ -62,6 +88,19 @@ class gdipak:
                     if fnmatch.fnmatch(item.name, "*" + ext):
                         files.append(item.name)
         return files
+
+    def get_subdirs_in_dir(self, directory):
+        """ Searches in a given directory for subdirectories
+        arguments:  A path-like object for a directory to search in
+        returns:    A  list of subdirectories or None if none are found
+        """
+        dirs = list()
+        with os.scandir(directory) as itr:
+            for item in itr:
+                if not item.is_dir():
+                    continue
+                dirs.append(item.path)
+        return dirs
 
 
 def validate_args(args):
@@ -141,21 +180,14 @@ def main():
 
     in_dir = args["in_dir"]
     recursive = args["recursive"]
-    #modify_files = True
     out_dir = str()
     if "modify" not in args.keys():
-        #modify_files = False
         out_dir = args["out_dir"]
     else:
         out_dir = in_dir
 
     g = gdipak()
-    files = g.get_files_in_dir(in_dir)
-    for in_file in files:
-        in_filename = os.path.basename(in_file)
-        out_filename = g.convert_filename(in_filename)
-        out_path = os.path.join(out_dir, out_filename)
-        g.write_file(in_file, out_file)
+    g.process_dir(in_dir, out_dir, recursive)
 
 
 if __name__ == "__main__":

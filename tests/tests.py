@@ -19,8 +19,8 @@ class TestValidateArgs:
         args = dict([("in_dir", fqd), ("out_dir", fqd)])
         validate_args(args)
 
-class TestFileOperations:
-    def test_get_files_in_dir_alphanumeric(self, tmpdir):
+class TestGetFilesInDir:
+    def test_alphanumeric(self, tmpdir):
         dirname = "gamedir"
         filename = "aBcD1234.gdi"
         p = tmpdir.mkdir(dirname).join(filename)
@@ -32,7 +32,7 @@ class TestFileOperations:
         assert(files[0] == filename)
         
 
-    def test_get_files_in_dir_special_chars(self, tmpdir):
+    def test_special_chars(self, tmpdir):
         dirname = "gamedir 2! (The Redirening)"
         filename = "123 !@#$%^&*()<>?~|S{}[]-=_+.bin"
         p = tmpdir.mkdir(dirname).join(filename)
@@ -43,7 +43,7 @@ class TestFileOperations:
         assert(len(files) is 1)
         assert(files[0] == filename)
 
-    def test_get_files_in_dir_unrelated_file(self, tmpdir):
+    def test_unrelated_file(self, tmpdir):
         dirname = "gamedirrrr"
         filename = "Vacation Photo-1528.jpg"
         p = tmpdir.mkdir(dirname).join(filename)
@@ -53,7 +53,7 @@ class TestFileOperations:
         files = g.get_files_in_dir(dir_path)
         assert(len(files) is 0)
 
-    def test_get_files_in_dir_multi_files(self, tmpdir):
+    def test_multi_files(self, tmpdir):
         dirname = "gamedir"
         filenames = (
             "mygame.gdi",
@@ -71,6 +71,25 @@ class TestFileOperations:
         assert(len(files) is (len(filenames) -1))
         for f in files:
             assert(f != filenames[len(filenames) - 1])
+
+class TestGetSubdirsInDir:
+    def test_dirs_dont_exist(self, tmpdir):
+        tmpdir.mkdir("basedir")
+        dir_path = tmpdir.listdir()[0]
+        g = gdipak()
+        dirs = g.get_subdirs_in_dir(dir_path)
+        assert(len(dirs) is 0)
+
+    def test_dirs_exist(self, tmpdir):
+        base = tmpdir.mkdir("basedir")
+        sub1 = base.mkdir("subdir1")
+        sub2 = base.mkdir("subdir2")
+        dir_path = tmpdir.listdir()[0]
+        g = gdipak()
+        dirs = g.get_subdirs_in_dir(dir_path)
+        assert(len(dirs) is 2)
+        assert(sub1 in dirs)
+        assert(sub2 in dirs)
 
 class TestConvertFilename:
     def test_convert_gdi(self):
@@ -95,15 +114,15 @@ class TestConvertFilename:
     def test_bad_file_type(self):
         g = gdipak()
         with pytest.raises(ValueError):
-            result = g.convert_filename("Very Good Game.cdi")
+            g.convert_filename("Very Good Game.cdi")
 
     def test_ambiguous_file_name(self):
         g = gdipak()
         with pytest.raises(SyntaxError):
-            result = g.convert_filename("Very Good Game.bin")
+            g.convert_filename("Very Good Game.bin")
 
 class TestWriteFile:
-    def test_write_same_file(self, tmpdir):
+    def test_same_file(self, tmpdir):
         io_dir = tmpdir.mkdir("Game!")
         in_file = io_dir.join("Game!.gdi")
         contents = b"This is the contents of the file"
@@ -118,12 +137,28 @@ class TestWriteFile:
         with open(out_filename, "br") as f:
             assert(contents == f.read())
 
-    def test_write_different_file(self, tmpdir):
+    def test_different_file(self, tmpdir):
         in_dir = tmpdir.mkdir("Game!")
         in_file = in_dir.join("Game!.gdi")
         in_file.write(b"This is the contents of the file")
         
         out_dir = tmpdir.mkdir("outputdir")
+        out_filename = os.path.join(out_dir, "disc.gdi")
+        g = gdipak()
+        g.write_file(in_file, out_filename)
+
+        #original file still exists
+        assert(in_file.check())
+        with open(in_file, "br") as f_in:
+            with open(out_filename, "br") as f_out:
+                assert(f_in.read() == f_out.read())
+
+    def test_missing_directory(self, tmpdir):
+        in_dir = tmpdir.mkdir("Game!")
+        in_file = in_dir.join("Game!.gdi")
+        in_file.write(b"This is the contents of the file")
+        
+        out_dir = os.path.join(tmpdir, "outputdir")
         out_filename = os.path.join(out_dir, "disc.gdi")
         g = gdipak()
         g.write_file(in_file, out_filename)
