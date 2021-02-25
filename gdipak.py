@@ -45,12 +45,13 @@ class gdipak:
         output_file: a path to which to write the data
         returns: None
         """
-        #TODO: validate that path exists and create it if not
         in_dir = os.path.dirname(input_file)
         out_dir = os.path.dirname(output_file)
         if in_dir == out_dir:
             os.rename(input_file, output_file)
         else:
+            if not os.path.exists(out_dir):
+                os.makedirs(os.path.realpath(out_dir))
             with open(input_file, 'rb') as f_in:
                 with open(output_file, 'wb') as f_out:
                     f_out.write(f_in.read())
@@ -60,6 +61,7 @@ class gdipak:
         """ Based on the input filename generates an output filename
         arguments:  A string representing a filename, with extension
         returns:    A string that GDEMU expects for that file's name
+        raises: ValueError, SyntaxError
         """
         name, ext = os.path.splitext(input_filename)
         ext = ext.lower()
@@ -88,6 +90,7 @@ class gdipak:
                     if fnmatch.fnmatch(item.name, "*" + ext):
                         files.append(item.name)
         return files
+
 
     def get_subdirs_in_dir(self, directory):
         """ Searches in a given directory for subdirectories

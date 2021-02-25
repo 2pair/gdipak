@@ -168,3 +168,13 @@ class TestWriteFile:
         with open(in_file, "br") as f_in:
             with open(out_filename, "br") as f_out:
                 assert(f_in.read() == f_out.read())
+
+class TestProcessDir:
+    def test_single_dir_same_out_dir(self, tmpdir):
+        assert(True)
+
+    def test_single_dir_different_out_dir(self, tmpdir):
+        assert(True)
+
+    def test_recursive_dir_same_out_dir(self, tmpdir):
+        assert(True)
