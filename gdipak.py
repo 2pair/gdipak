@@ -14,14 +14,27 @@ class gdipak:
     part of a .gdi game dump"""
     valid_extensions = (".gdi", ".bin", ".raw")
 
-    def process_dir(self, in_dir, out_dir, recursive):
+    def process_dir(self, in_dir, out_dir, recursive=False, namefile=False):
         """ converts and copies or renames all files in a directory 
         and optionally subdirectories.
-        arguments: The directory to process, the output directory, 
-        and if subdirectories should be processed
-        returns: None
+        arguments: 
+            in_dir      str     The directory to process
+            out_dir     str     The output directory
+            recursive   bool    If subdirectories should be processed
+            namefile    bool    Should a name file be generated
+        returns:        None
+        raises:         ValueError
         """
         files = self.get_files_in_dir(in_dir)
+        gdi_files = [match for match in files if ".gdi" in match]
+        if len(gdi_files) > 1:
+            raise ValueError("Directory does not contain a gdi file")
+        if len(gdi_files) > 1:
+            raise ValueError("Directory contains more than one gdi file")
+
+        if namefile:
+            self.write_name_file(out_dir, gdi_files[0])
+
         for in_file in files:
             in_filename = os.path.basename(in_file)
             out_filename = self.convert_filename(in_filename)
@@ -39,31 +52,53 @@ class gdipak:
                 self.process_dir(subdir, sub_outdir, recursive)
 
 
-    def write_file(self, input_file, output_file):
-        """ Generates a file with the given contents
-        arguments:  input_file: a path to a file from which to copy data 
-        output_file: a path to which to write the data
-        returns: None
+    def write_name_file(self, out_dir, gdi_file):
+        """ Creates an empty text file with the name of the given gdi file
+        arguments: 
+            out_dir     str     The location to write the name file
+            gdi_file    str     The file who's name will be used for the name file
+        returns:        None
+        raises:         None
         """
-        in_dir = os.path.dirname(input_file)
-        out_dir = os.path.dirname(output_file)
+        if not os.path.exists(out_dir):
+            os.makedirs(os.path.realpath(out_dir))
+        
+        gdi_filename = os.path.basename(gdi_file)
+        filename = os.path.splitext(gdi_filename)[0]
+        txt_filename = filename + ".txt"
+        out_file = os.path.join(out_dir, txt_filename)
+        with open(out_file, 'w') as f_out:
+            f_out.write("")
+        
+
+    def write_file(self, in_file, out_file):
+        """ Generates a file with the given contents
+        arguments:  
+            in_file     str    a path to a file from which to copy data 
+            out_file    str    a path to which to write the data
+        returns:        None
+        raises:         None
+        """
+        in_dir = os.path.dirname(in_file)
+        out_dir = os.path.dirname(out_file)
         if in_dir == out_dir:
-            os.rename(input_file, output_file)
+            os.rename(in_file, out_file)
         else:
             if not os.path.exists(out_dir):
                 os.makedirs(os.path.realpath(out_dir))
-            with open(input_file, 'rb') as f_in:
-                with open(output_file, 'wb') as f_out:
+            with open(in_file, 'rb') as f_in:
+                with open(out_file, 'wb') as f_out:
                     f_out.write(f_in.read())
 
 
-    def convert_filename(self, input_filename):
+    def convert_filename(self, in_filename):
         """ Based on the input filename generates an output filename
-        arguments:  A string representing a filename, with extension
-        returns:    A string that GDEMU expects for that file's name
-        raises: ValueError, SyntaxError
+        arguments:  
+            in_filename  str    A string representing a filename, with extension
+        returns:         str    A string that GDEMU expects for that file's name
+        raises:          ValueError, SyntaxError
         """
-        name, ext = os.path.splitext(input_filename)
+        name, ext = os.path.splitext(in_filename)
         ext = ext.lower()
         if not ext or ext not in self.valid_extensions:
             raise ValueError("Invalid file type")
@@ -78,8 +113,10 @@ class gdipak:
 
     def get_files_in_dir(self, directory):
         """ Searches in a given directory for files relevent to the gdi format
-        arguments:  A path-like object for a directory to search in
-        returns:    A  list of file names or None if no files found
+        arguments:  
+            directory   str     A path-like object for a directory to search in
+        returns:        str     A  list of file names or None if no files found
+        raises:         None
         """
         files = list()
         with os.scandir(directory) as itr:
@@ -94,8 +131,10 @@ class gdipak:
 
     def get_subdirs_in_dir(self, directory):
         """ Searches in a given directory for subdirectories
-        arguments:  A path-like object for a directory to search in
-        returns:    A  list of subdirectories or None if none are found
+        arguments:  
+            directory:  str         A path-like object for a directory to search in
+        returns:        list(str)   A  list of subdirectories or None if none are found
+        raises:         None
         """
         dirs = list()
         with os.scandir(directory) as itr:
@@ -108,8 +147,10 @@ class gdipak:
 
 def validate_args(args):
     """ Validates the supplied arguments. Exits on failure
-    arguments:  A dictionary of args from argparse
-    returns:    None
+    arguments:  
+        args        dict(str, str)  A dictionary of args from argparse
+    returns:        None
+    raises:         None
     """
     if args["in_dir"] is not None:
         fail_msg = "Input directory is not a directory"
@@ -134,8 +175,10 @@ def validate_args(args):
 
 def setup_argparser():
     """ Creates the argument parser
-    arguments:  None
-    returns:    An instance of argparse.ArgumentParser"""
+    arguments:      None
+    returns:        argparse.ArgumentParser
+    raises:         None
+    """
 
     parser = argparse.ArgumentParser(description=
         """Scans a directory and optionally subdirectories for *.gdi files 
@@ -156,6 +199,11 @@ def setup_argparser():
         dest="recursive",
         required=False,
         help="If specified will search within subdirectories")
+    parser.add_argument("-n", "--namefile",
+        action="store_true",
+        dest="namefile",
+        required=False,
+        help="""If specified will create a *.txt file with the original name of the *.gdi file""")
 
     out_group = parser.add_mutually_exclusive_group(required=True)
     out_group.add_argument("-m", "--modify",
@@ -170,7 +218,7 @@ def setup_argparser():
         required=False,
         help="the directory to output results to",
         metavar="OUTPUT_DIRECTORY")
-
+    
     return parser
 
 
@@ -183,6 +231,7 @@ def main():
 
     in_dir = args["in_dir"]
     recursive = args["recursive"]
+    namefile = args["namefile"]
     out_dir = str()
     if "modify" not in args.keys():
         out_dir = args["out_dir"]
@@ -190,7 +239,7 @@ def main():
         out_dir = in_dir
 
     g = gdipak()
-    g.process_dir(in_dir, out_dir, recursive)
+    g.process_dir(in_dir, out_dir, recursive, namefile)
 
 
 if __name__ == "__main__":

@@ -30,11 +30,10 @@ class TestGetFilesInDir:
         files = g.get_files_in_dir(dir_path)
         assert(len(files) is 1)
         assert(files[0] == filename)
-        
 
     def test_special_chars(self, tmpdir):
         dirname = "gamedir 2! (The Redirening)"
-        filename = "123 !@#$%^&*()<>?~|S{}[]-=_+.bin"
+        filename = "123 !@#$%^&()~S{}[]-=_+'`.bin"
         p = tmpdir.mkdir(dirname).join(filename)
         p.write("")
         dir_path = tmpdir.listdir()[0]
@@ -169,6 +168,31 @@ class TestWriteFile:
             with open(out_filename, "br") as f_out:
                 assert(f_in.read() == f_out.read())
 
+class TestWriteNameFile:
+    def test_out_dir_exists_bare_gdi_file_str(self, tmpdir):
+        game_name = "Bills Okay But Lonely Adventure- The Game"
+        out_dir = tmpdir.mkdir(game_name)
+        gdi_filename = game_name + ".gdi"
+        g = gdipak()
+        g.write_name_file(out_dir, gdi_filename)
+        assert(os.path.isfile(os.path.join(out_dir, game_name + ".txt")))
+
+    def test_out_dir_exists_gdi_file_path(self, tmpdir):
+        game_name = "Morgan the Bull And Stanley the Bear Go To Market"
+        out_dir = tmpdir.mkdir(game_name)
+        gdi_filepath = os.path.join(out_dir, game_name + ".gdi")
+        g = gdipak()
+        g.write_name_file(out_dir, gdi_filepath)
+        assert(os.path.isfile(os.path.join(out_dir, game_name + ".txt")))
+
+    def test_out_dir_doesnt_exist_bare_gdi_file_str(self, tmpdir):
+        game_name = "Somebody Once Told Me - Allstars!"
+        out_dir = os.path.join(tmpdir, game_name)
+        gdi_filename = game_name + ".gdi"
+        g = gdipak()
+        g.write_name_file(out_dir, gdi_filename)
+        assert(os.path.isfile(os.path.join(out_dir, game_name + ".txt")))
+
 class TestProcessDir:
     def test_single_dir_same_out_dir(self, tmpdir):
         assert(True)
@@ -177,4 +201,13 @@ class TestProcessDir:
         assert(True)
 
     def test_recursive_dir_same_out_dir(self, tmpdir):
+        assert(True)
+
+    def test_recursive_dir_different_out_dir(self, tmpdir):
+        assert(True)
+
+    def test_missing_gdi_file(self, tmpdir):
+        assert(True)
+
+    def test_too_many_gdi_files(self, tmpdir):
         assert(True)
