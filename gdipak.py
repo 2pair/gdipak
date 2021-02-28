@@ -13,14 +13,14 @@ class Gdipak:
     part of a .gdi game dump"""
     valid_extensions = (".gdi", ".bin", ".raw")
     
-    def pack_gdi(self, in_dir, out_dir, recursive=False, namefile=False):
+    def pack_gdi(self, in_dir, out_dir, recursive=None, namefile=False):
         """ converts and copies or renames all files in a directory 
         and optionally subdirectories.
         arguments: 
-            in_dir      str     The directory to process
-            out_dir     str     The output directory
-            recursive   bool    If subdirectories should be processed
-            namefile    bool    Should a name file be generated
+            in_dir      str             The directory to process
+            out_dir     str             The output directory
+            recursive   RecursiveMode   If subdirectories should be processed
+            namefile    bool            Should a name file be generated
         returns:        None
         raises:         ValueError
         """
@@ -45,6 +45,7 @@ class Gdipak:
             subdirs = self.get_subdirs_in_dir(in_dir)
             for subdir in subdirs:
                 sub_outdir = str()
+                #TODO: need to use the different recursive modes
                 if in_dir == out_dir:
                     sub_outdir = subdir
                 else:
@@ -151,8 +152,12 @@ def main():
     args = a.run()
 
     in_dir = args["in_dir"]
-    recursive = args["recursive"]
-    namefile = args["namefile"]
+    recursive = None
+    if "recursive" in args.keys():
+        recursive = args["recursive"]
+    namefile = None
+    if "namefile" in args.keys():
+        namefile = args["namefile"]
     out_dir = str()
     if "modify" not in args.keys():
         out_dir = args["out_dir"]
