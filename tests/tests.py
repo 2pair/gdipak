@@ -5,6 +5,7 @@ from gdipak import Gdipak
 from argparser import ArgParser
 
 from os import path
+from os import scandir
 
 class TestValidateArgs:
     a = ArgParser()
@@ -21,6 +22,35 @@ class TestValidateArgs:
         fqd = path.abspath(".")
         args = dict([("in_dir", fqd), ("out_dir", fqd)])
         self.a._ArgParser__validate_args(args)
+
+    def test_invalid_in_dir(self):
+        args = dict([("in_dir", 7), ("out_dir", ".")])
+        with pytest.raises(SystemExit):
+            self.a._ArgParser__validate_args(args)
+
+    def test_invalid_out_dir(self):
+        args = dict([("in_dir", "."), ("out_dir", "U:/RuhRoh")])
+        with pytest.raises(SystemExit):
+            self.a._ArgParser__validate_args(args)
+
+    def test_recursive_valid(self):
+        args = dict([("in_dir", "."), ("recursive", None)])
+        self.a._ArgParser__validate_args(args)
+        
+        args = dict([("in_dir", "."), ("recursive", 0)])
+        self.a._ArgParser__validate_args(args)
+        
+        args = dict([("in_dir", "."), ("recursive", 1)])
+        self.a._ArgParser__validate_args(args)
+
+    def test_recursive_invalid(self):
+        args = dict([("in_dir", "."), ("recursive", 27)])
+        with pytest.raises(SystemExit):
+            self.a._ArgParser__validate_args(args)
+        
+        args = dict([("in_dir", "."), ("recursive", "Houston")])
+        with pytest.raises(SystemExit):
+            self.a._ArgParser__validate_args(args)
 
 class TestGetFilesInDir:
     def test_alphanumeric(self, tmpdir):
@@ -196,12 +226,72 @@ class TestWriteNameFile:
         g.write_name_file(out_dir, gdi_filename)
         assert(path.isfile(path.join(out_dir, game_name + ".txt")))
 
-class TestProcessDir:
+class TestPackGdi:
+    def make_files(self, tmpdir, gamename):
+        """creates a typical game directory"""
+        filenames = (
+            gamename + ".gdi",
+            gamename + "(track1).bin",
+            gamename + "(track2).bin",
+            gamename + "(track3).raw")
+        tmp_dir = tmpdir.mkdir(gamename)
+        for f in filenames:
+            p = tmp_dir.join(f)
+            p.write("")
+        dir_path = tmpdir.listdir()[0]
+
+        return dir_path, filenames
+
+    def check_filename(self, file):
+        """makes sure the output file name is correct"""
+        filename = path.basename(file)
+        name, ext = path.splitext(filename)
+        if ext.lower() == ".gdi":
+            assert(name == "disc")
+        elif ext.lower() == ".raw" or ext.lower() == ".bin":
+            assert(name[:5] == "track")
+            try:
+                int(name[5:])
+            except:
+                assert(False)
+        else:
+            assert(False)
+
     def test_single_dir_same_out_dir(self, tmpdir):
-        assert(True)
+        dir_path, _1 = self.make_files(tmpdir, "mygame")
+        g = Gdipak()
+        g.pack_gdi(dir_path, dir_path, False, False)
+
+        #dir name didn't change
+        assert(tmpdir.listdir()[0] == dir_path)
+        with scandir(dir_path) as itr:
+            for item in itr:
+                self.check_filename(item)
+
+    def test_single_dir_same_out_dir_default_args(self, tmpdir):
+        dir_path, _1 = self.make_files(tmpdir, "mygame")
+        g = Gdipak()
+        g.pack_gdi(dir_path, dir_path)
+
+        #dir name didn't change
+        assert(tmpdir.listdir()[0] == dir_path) 
+        with scandir(dir_path) as itr:
+            for item in itr:
+                self.check_filename(item)
 
     def test_single_dir_different_out_dir(self, tmpdir):
-        assert(True)
+        in_dir, in_filenames = self.make_files(tmpdir, "mygame")
+        out_dir = tmpdir.mkdir("processed_game")
+        g = Gdipak()
+        g.pack_gdi(in_dir, out_dir)
+
+        #src files didn't change
+        with scandir(in_dir) as itr: 
+            for item in itr:
+                assert(path.basename(item) in in_filenames)
+        with scandir(out_dir) as itr:
+            for item in itr:
+                self.check_filename(item)
 
     def test_recursive_dir_same_out_dir(self, tmpdir):
         assert(True)

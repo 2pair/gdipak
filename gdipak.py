@@ -12,8 +12,8 @@ class Gdipak:
     """Includes functions for finding and parsing files that are 
     part of a .gdi game dump"""
     valid_extensions = (".gdi", ".bin", ".raw")
-
-    def process_dir(self, in_dir, out_dir, recursive=False, namefile=False):
+    
+    def pack_gdi(self, in_dir, out_dir, recursive=False, namefile=False):
         """ converts and copies or renames all files in a directory 
         and optionally subdirectories.
         arguments: 
@@ -37,6 +37,7 @@ class Gdipak:
         for in_file in files:
             in_filename = os.path.basename(in_file)
             out_filename = self.convert_filename(in_filename)
+            in_file = os.path.join(in_dir, in_filename)
             out_file = os.path.join(out_dir, out_filename)
             self.write_file(in_file, out_file)
 
@@ -48,7 +49,7 @@ class Gdipak:
                     sub_outdir = subdir
                 else:
                     sub_outdir = os.path.join(out_dir, subdir)
-                self.process_dir(subdir, sub_outdir, recursive)
+                self.pack_gdi(subdir, sub_outdir, recursive)
 
 
     def write_name_file(self, out_dir, gdi_file):
@@ -159,7 +160,7 @@ def main():
         out_dir = in_dir
 
     g = Gdipak()
-    g.process_dir(in_dir, out_dir, recursive, namefile)
+    g.pack_gdi(in_dir, out_dir, recursive, namefile)
 
 
 if __name__ == "__main__":

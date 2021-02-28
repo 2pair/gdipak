@@ -24,23 +24,36 @@ class ArgParser:
         returns:        None
         raises:         None
         """
-        if args["in_dir"] is not None:
-            fail_msg = "Input directory is not a directory"
+        fail_msg = "Input directory is not a directory"
+        # mandatory argument
+        if args["in_dir"] is None:
+            print(fail_msg)
+            sys.exit(0)
+        try:
+            if not os.path.isdir(args["in_dir"]):
+                print(fail_msg)
+                sys.exit(0)
+        except FileNotFoundError:
+            print(fail_msg)
+            sys.exit(0)
+
+        if "out_dir" in args:
+            fail_msg = "Output directory is not a directory"
+            if args["out_dir"] is None:
+                print(fail_msg)
+                sys.exit(0)
             try:
-                if not os.path.isdir(args["in_dir"]):
+                if not os.path.isdir(args["out_dir"]):
                     print(fail_msg)
                     sys.exit(0)
             except FileNotFoundError:
                 print(fail_msg)
                 sys.exit(0)
 
-        if args["out_dir"] is not None:
-            fail_msg = "Output directory is not a directory"
-            try:
-                if not os.path.isdir(args["out_dir"]):
-                    print(fail_msg)
-                    sys.exit(0)
-            except FileNotFoundError:
+        if "recursive" in args:
+            fail_msg = "valid values for \"recursive\" are blank, 0, and 1."
+            r_mode = args["recursive"]
+            if r_mode is not None and r_mode != 1 and r_mode != 0:
                 print(fail_msg)
                 sys.exit(0)
 
@@ -67,10 +80,14 @@ class ArgParser:
             help="The directory to scan for *.gdi files for processing",
             metavar="ROOT_SEARCH_DIRECTORY")
         parser.add_argument("-r", "--recursive",
-            action="store_true",
+            action="store",
+            type="int",
             dest="recursive",
             required=False,
-            help="If specified will search within subdirectories")
+            help="If specified will search within subdirectories. Valid values are 0 and 1. " +
+                "If no value is specified mode 0 is assumed. " +
+                "In mode 0 directory structure is preserved in the output directory. " +
+                "In mode 1 each game output directory is created in a flat directory.")
         parser.add_argument("-n", "--namefile",
             action="store_true",
             dest="namefile",
