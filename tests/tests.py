@@ -8,7 +8,7 @@ from os import path
 from os import scandir
 
 class TestValidateArgs:
-    a = ArgParser()
+    a = ArgParser("0")
 
     def test_current_dir(self):
         args = dict([("in_dir", "."), ("out_dir", ".")])
@@ -34,9 +34,6 @@ class TestValidateArgs:
             self.a._ArgParser__validate_args(args)
 
     def test_recursive_valid(self):
-        args = dict([("in_dir", "."), ("recursive", None)])
-        self.a._ArgParser__validate_args(args)
-        
         args = dict([("in_dir", "."), ("recursive", 0)])
         self.a._ArgParser__validate_args(args)
         

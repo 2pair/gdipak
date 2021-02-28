@@ -3,9 +3,13 @@ import argparse
 import sys
 import os
 
-from gdipak import __version__
-
 class ArgParser:
+    def __init__(self, version):
+        """version: The program version, to be used in cmdline help
+        """
+        self.version = version
+
+
     def run(self):
         """ setups up the argument parsing and returns the validated arguments
         arguments:  None
@@ -53,7 +57,7 @@ class ArgParser:
         if "recursive" in args:
             fail_msg = "valid values for \"recursive\" are blank, 0, and 1."
             r_mode = args["recursive"]
-            if r_mode is not None and r_mode != 1 and r_mode != 0:
+            if r_mode != 1 and r_mode != 0:
                 print(fail_msg)
                 sys.exit(0)
 
@@ -71,7 +75,7 @@ class ArgParser:
             to the expected format for the GDEMU""")
         parser.add_argument("-v", "--version", 
             action="version", 
-            version=str(__version__))
+            version=str(self.version))
 
         parser.add_argument("-d", "--indirectory",
             action="store",
@@ -81,13 +85,16 @@ class ArgParser:
             metavar="ROOT_SEARCH_DIRECTORY")
         parser.add_argument("-r", "--recursive",
             action="store",
-            type="int",
+            nargs='?',
+            type=int,
+            default=0,
             dest="recursive",
             required=False,
             help="If specified will search within subdirectories. Valid values are 0 and 1. " +
                 "If no value is specified mode 0 is assumed. " +
                 "In mode 0 directory structure is preserved in the output directory. " +
-                "In mode 1 each game output directory is created in a flat directory.")
+                "In mode 1 each game output directory is created in a flat directory.",
+            metavar="MODE")
         parser.add_argument("-n", "--namefile",
             action="store_true",
             dest="namefile",

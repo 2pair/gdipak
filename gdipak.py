@@ -147,7 +147,7 @@ class Gdipak:
 
 def main():
     """Normal execution when run as script"""
-    a = ArgParser()
+    a = ArgParser(__version__)
     args = a.run()
 
     in_dir = args["in_dir"]
