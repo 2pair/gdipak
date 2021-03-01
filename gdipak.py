@@ -3,7 +3,7 @@ consumption by GDEMU"""
 
 __version__ = 0.1
 
-from argparser import ArgParser
+from argparser import ArgParser, RecursiveMode
 import os
 import fnmatch
 import re
@@ -15,7 +15,7 @@ class Gdipak:
     
     def pack_gdi(self, in_dir, out_dir, recursive=None, namefile=False):
         """ converts and copies or renames all files in a directory 
-        and optionally subdirectories.
+        and optionally subdirectories. If indir == out_dir files will be modified.
         arguments: 
             in_dir      str             The directory to process
             out_dir     str             The output directory
@@ -34,22 +34,30 @@ class Gdipak:
         if namefile:
             self.write_name_file(out_dir, gdi_files[0])
 
+        last_dir = os.path.basename(in_dir)
         for in_file in files:
             in_filename = os.path.basename(in_file)
             out_filename = self.convert_filename(in_filename)
             in_file = os.path.join(in_dir, in_filename)
-            out_file = os.path.join(out_dir, out_filename)
+            out_file = out_dir
+            if in_dir != out_dir:
+                out_file = os.path.join(out_file, last_dir)
+            out_file = os.path.join(out_file, out_filename)
             self.write_file(in_file, out_file)
 
         if recursive:
             subdirs = self.get_subdirs_in_dir(in_dir)
             for subdir in subdirs:
                 sub_outdir = str()
-                #TODO: need to use the different recursive modes
+                # in_dir == out_dir means modify files
                 if in_dir == out_dir:
                     sub_outdir = subdir
+                elif recursive == RecursiveMode.FLAT_STRUCTURE:
+                    sub_outdir = out_dir
+                elif recursive == RecursiveMode.PRESERVE_STRUCTURE:
+                    sub_outdir = os.path.join(out_dir, last_dir)
                 else:
-                    sub_outdir = os.path.join(out_dir, subdir)
+                    raise ValueError("Argument 'recursive' is not a mmeber of the enum 'RecursiveMode'")
                 self.pack_gdi(subdir, sub_outdir, recursive)
 
 
