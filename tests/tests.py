@@ -64,7 +64,7 @@ class TestGetFilesInDir:
         dir_path = tmpdir.listdir()[0]
         g = Gdipak()
         files = g.get_files_in_dir(dir_path)
-        assert(len(files) is 1)
+        assert(len(files) == 1)
         assert(files[0] == filename)
 
     def test_special_chars(self, tmpdir):
@@ -75,7 +75,7 @@ class TestGetFilesInDir:
         dir_path = tmpdir.listdir()[0]
         g = Gdipak()
         files = g.get_files_in_dir(dir_path)
-        assert(len(files) is 1)
+        assert(len(files) == 1)
         assert(files[0] == filename)
 
     def test_unrelated_file(self, tmpdir):
@@ -86,7 +86,7 @@ class TestGetFilesInDir:
         dir_path = tmpdir.listdir()[0]
         g = Gdipak()
         files = g.get_files_in_dir(dir_path)
-        assert(len(files) is 0)
+        assert(len(files) == 0)
 
     def test_multi_files(self, tmpdir):
         dirname = "gamedir"
@@ -103,7 +103,7 @@ class TestGetFilesInDir:
         dir_path = tmpdir.listdir()[0]
         g = Gdipak()
         files = g.get_files_in_dir(dir_path)
-        assert(len(files) is (len(filenames) -1))
+        assert(len(files) == (len(filenames) -1))
         for f in files:
             assert(f != filenames[len(filenames) - 1])
 
@@ -113,7 +113,7 @@ class TestGetSubdirsInDir:
         dir_path = tmpdir.listdir()[0]
         g = Gdipak()
         dirs = g.get_subdirs_in_dir(dir_path)
-        assert(len(dirs) is 0)
+        assert(len(dirs) == 0)
 
     def test_dirs_exist(self, tmpdir):
         base = tmpdir.mkdir("basedir")
@@ -122,7 +122,7 @@ class TestGetSubdirsInDir:
         dir_path = tmpdir.listdir()[0]
         g = Gdipak()
         dirs = g.get_subdirs_in_dir(dir_path)
-        assert(len(dirs) is 2)
+        assert(len(dirs) == 2)
         assert(sub1 in dirs)
         assert(sub2 in dirs)
 
@@ -254,11 +254,11 @@ class TestPackGdi:
             assert(name[:5] == "track")
             try:
                 int(name[5:])
-            except:
+            except:                                 # pragma: no cover
                 assert(False)
         elif ext.lower() == ".txt":
             assert(name == dirname)
-        else:
+        else:                                       # pragma: no cover
             print("name was: " + name)
             assert(False)
 
@@ -271,7 +271,7 @@ class TestPackGdi:
                     self.__check_filename(item, dirname)
                 elif path.isdir(item):
                     continue
-                else:
+                else:                               # pragma: no cover
                     assert(False)
 
     def test_single_dir_same_out_dir(self, tmpdir):

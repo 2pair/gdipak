@@ -130,3 +130,6 @@ dmypy.json
 
 # Local History for Visual Studio Code
 .history/
+
+# Coverage html output
+coverage_html_report

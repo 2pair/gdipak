@@ -1,0 +1,13 @@
+[run]
+command_line = -m pytest .\\tests\\tests.py
+
+source=
+    .
+
+omit=
+    .\venv\*
+    .\runtests.py
+    .\setup.py
+
+[html]
+directory = coverage_html_report
