@@ -25,8 +25,8 @@ class Gdipak:
         raises:         ValueError
         """
         files = self.get_files_in_dir(in_dir)
-        gdi_files = fnmatch.filter(files, ".gdi")
-        if len(gdi_files) > 1:
+        gdi_files = fnmatch.filter(files, "*.gdi")
+        if len(gdi_files) < 1:
             raise ValueError("Directory does not contain a gdi file")
         if len(gdi_files) > 1:
             raise ValueError("Directory contains more than one gdi file")
