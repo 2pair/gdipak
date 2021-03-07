@@ -1,1 +1,2 @@
-python -m pytest .\tests\tests.py
+coverage run
+coverage html

@@ -1,59 +1,11 @@
 """ Tests for gdipak"""
 
 import pytest
-from gdipak import Gdipak
-from argparser import ArgParser
-from argparser import RecursiveMode
-
-from os import path, scandir, remove
+from os import path, scandir
 from py import path as pypath
 
-class TestValidateArgs:
-    a = ArgParser("0")
-
-    def test_current_dir(self):
-        args = {"in_dir": ".", "out_dir": "."}
-        self.a._ArgParser__validate_args(args)
-
-    def test_parent_dir(self):
-        args = {"in_dir": "..", "out_dir": ".."}
-        self.a._ArgParser__validate_args(args)
-
-    def test_fully_qualified_dir(self):
-        fqd = path.abspath(".")
-        args = {"in_dir": fqd, "out_dir": fqd}
-        self.a._ArgParser__validate_args(args)
-
-    def test_invalid_in_dir(self):
-        args = {"in_dir": 7, "out_dir": "."}
-        with pytest.raises(SystemExit):
-            self.a._ArgParser__validate_args(args)
-
-    def test_invalid_out_dir(self):
-        args = {"in_dir": ".", "out_dir": "U:/RuhRoh"}
-        with pytest.raises(SystemExit):
-            self.a._ArgParser__validate_args(args)
-
-    def test_recursive_valid(self):
-        args = {"in_dir": ".", "recursive": 0}
-        self.a._ArgParser__validate_args(args)
-        
-        args = {"in_dir": ".", "recursive": 1}
-        self.a._ArgParser__validate_args(args)
-
-    def test_recursive_invalid(self):
-        args = {"in_dir": ".", "recursive": 27}
-        with pytest.raises(SystemExit):
-            self.a._ArgParser__validate_args(args)
-        
-        args = {"in_dir": ".", "recursive": "Houston"}
-        with pytest.raises(SystemExit):
-            self.a._ArgParser__validate_args(args)
-
-    def test_recursive_and_modify(self):
-        args = {"in_dir": ".", "recursive": 1, "modify": True}
-        args = self.a._ArgParser__validate_args(args)
-        assert(args["recursive"] == RecursiveMode.PRESERVE_STRUCTURE)
+from gdipak import Gdipak
+from argparser import RecursiveMode
 
 class TestGetFilesInDir:
     def test_alphanumeric(self, tmpdir):

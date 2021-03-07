@@ -24,13 +24,13 @@ class ArgParser:
         self.version = version
 
 
-    def run(self):
+    def run(self, args):
         """ setups up the argument parsing and returns the validated arguments
         arguments:  None
         returns:    dict  the dictionary of validated arguments
         raises:     None"""
         parser = self.__setup_argparser()
-        args = vars(parser.parse_args())
+        args = vars(parser.parse_args(args))
         args = self.__validate_args(args)
         return args
 
@@ -48,28 +48,21 @@ class ArgParser:
         if args["in_dir"] is None:
             print(fail_msg)
             sys.exit(0)
-        try:
-            if not os.path.isdir(args["in_dir"]):
-                print(fail_msg)
-                sys.exit(0)
-        except FileNotFoundError:
+        
+        if not os.path.isdir(args["in_dir"]):
             print(fail_msg)
             sys.exit(0)
 
-        if "out_dir" in args:
-            fail_msg = "Output directory is not a directory"
-            if args["out_dir"] is None:
-                print(fail_msg)
+        if args["out_dir"] is None and args["modify"] is None:
+            print("Neither output directory or modify option was specified")
+            sys.exit(0)
+        elif args["out_dir"] is not None:
+            if not os.path.isdir(args["out_dir"]):
+                print("Output directory is not a directory")
                 sys.exit(0)
-            try:
-                if not os.path.isdir(args["out_dir"]):
-                    print(fail_msg)
-                    sys.exit(0)
-            except FileNotFoundError:
-                print(fail_msg)
-                sys.exit(0)
+        
 
-        if "recursive" in args:
+        if args["recursive"] is not None:
             fail_msg = "valid values for \"recursive\" are blank, 0, and 1."
             r_mode = args["recursive"]
             if r_mode != 1 and r_mode != 0:
@@ -107,7 +100,7 @@ class ArgParser:
             action="store",
             nargs='?',
             type=int,
-            default=0,
+            const=0,
             dest="recursive",
             required=False,
             help="If specified will search within subdirectories. Valid values are blank, 0 and 1. " +

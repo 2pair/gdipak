@@ -4,6 +4,7 @@ consumption by GDEMU"""
 __version__ = 0.1
 
 from argparser import ArgParser, RecursiveMode
+from sys import argv
 import os
 import fnmatch
 import re
@@ -157,17 +158,13 @@ class Gdipak:
 def main():
     """Normal execution when run as script"""
     a = ArgParser(__version__)
-    args = a.run()
+    args = a.run(argv[1:])
 
     in_dir = args["in_dir"]
-    recursive = None
-    if "recursive" in args.keys():
-        recursive = args["recursive"]
-    namefile = None
-    if "namefile" in args.keys():
-        namefile = args["namefile"]
+    recursive = args["recursive"]
+    namefile = args["namefile"]
     out_dir = str()
-    if "modify" not in args.keys():
+    if args["modify"] is None:
         out_dir = args["out_dir"]
     else:
         out_dir = in_dir
