@@ -164,7 +164,7 @@ def main():
     recursive = args["recursive"]
     namefile = args["namefile"]
     out_dir = str()
-    if args["modify"] is None:
+    if not args["modify"]:
         out_dir = args["out_dir"]
     else:
         out_dir = in_dir

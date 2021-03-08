@@ -4,6 +4,7 @@ import pytest
 from os import path, scandir
 from py import path as pypath
 
+from utils import make_files, check_files
 from gdipak import Gdipak
 from argparser import RecursiveMode
 
@@ -182,61 +183,17 @@ class TestWriteNameFile:
         assert(path.isfile(path.join(out_dir, game_name + ".txt")))
 
 class TestPackGdi:
-    def __make_files(self, tmpdir, game_name):
-        """creates a typical game directory"""
-        filenames = (
-            game_name + ".gdi",
-            game_name + "(track1).bin",
-            game_name + "(track2).bin",
-            game_name + "(track3).raw")
-        game_dir = tmpdir.mkdir(game_name)
-        for f in filenames:
-            p = game_dir.join(f)
-            p.write("")
-
-        return game_dir, filenames
-
-    def __check_filename(self, file, dirname):
-        """makes sure the output file name is correct"""
-        filename = path.basename(file)
-        name, ext = path.splitext(filename)
-        if ext.lower() == ".gdi":
-            assert(name == "disc")
-        elif ext.lower() == ".raw" or ext.lower() == ".bin":
-            assert(name[:5] == "track")
-            try:
-                int(name[5:])
-            except:                                 # pragma: no cover
-                assert(False)
-        elif ext.lower() == ".txt":
-            assert(name == dirname)
-        else:                                       # pragma: no cover
-            print("name was: " + name)
-            assert(False)
-
-    def __check_files(self, directory):
-        """ validates the filenames in a dir"""
-        dirname = path.basename(directory)
-        with scandir(directory) as itr:
-            for item in itr:
-                if path.isfile(item):
-                    self.__check_filename(item, dirname)
-                elif path.isdir(item):
-                    continue
-                else:                               # pragma: no cover
-                    assert(False)
-
     def test_single_dir_same_out_dir(self, tmpdir):
-        dir_path, _1 = self.__make_files(tmpdir, "mygame")
+        dir_path, _1 = make_files(tmpdir, "mygame")
         g = Gdipak()
         g.pack_gdi(dir_path, dir_path, False, False)
 
         #dir name didn't change
         assert(tmpdir.listdir()[0] == dir_path)
-        self.__check_files(dir_path)
+        check_files(dir_path)
 
     def test_single_dir_same_out_dir_gen_namefile(self, tmpdir):
-        dir_path, _1 = self.__make_files(tmpdir, "mygame")
+        dir_path, _1 = make_files(tmpdir, "mygame")
         g = Gdipak()
         print(dir_path)
         with scandir(dir_path) as itr:
@@ -246,19 +203,19 @@ class TestPackGdi:
 
         #dir name didn't change
         assert(tmpdir.listdir()[0] == dir_path)
-        self.__check_files(dir_path)
+        check_files(dir_path)
 
     def test_single_dir_same_out_dir_default_args(self, tmpdir):
-        dir_path, _1 = self.__make_files(tmpdir, "mygame")
+        dir_path, _1 = make_files(tmpdir, "mygame")
         g = Gdipak()
         g.pack_gdi(dir_path, dir_path)
 
         #dir name didn't change
         assert(tmpdir.listdir()[0] == dir_path) 
-        self.__check_files(dir_path)
+        check_files(dir_path)
 
     def test_single_dir_different_out_dir(self, tmpdir):
-        in_dir, in_filenames = self.__make_files(tmpdir, "mygame")
+        in_dir, in_filenames = make_files(tmpdir, "mygame")
         out_dir = tmpdir.mkdir("processed_game")
         g = Gdipak()
         g.pack_gdi(in_dir, out_dir)
@@ -268,91 +225,91 @@ class TestPackGdi:
             for item in itr:
                 assert(path.basename(item) in in_filenames)
         dir_path = path.join(out_dir, path.basename(in_dir))
-        self.__check_files(dir_path)
+        check_files(dir_path)
 
     def test_recursive_dir_bad_recursive_mode(self, tmpdir):
-        dir_path, _1 = self.__make_files(tmpdir, "mygame")
-        self.__make_files(dir_path, "some other game")
+        dir_path, _1 = make_files(tmpdir, "mygame")
+        make_files(dir_path, "some other game")
         out_dir = tmpdir.mkdir("output")
         g = Gdipak()
         with pytest.raises(ValueError):
             g.pack_gdi(dir_path, out_dir, "strawberry", False)
 
     def test_recursive_dir_same_out_dir_mode_none(self, tmpdir):
-        dir_path, _1 = self.__make_files(tmpdir, "mygame")
-        self.__make_files(dir_path, "some other game")
+        dir_path, _1 = make_files(tmpdir, "mygame")
+        make_files(dir_path, "some other game")
         g = Gdipak()
         g.pack_gdi(dir_path, dir_path, None, False)
-        self.__check_files(dir_path)
+        check_files(dir_path)
         with scandir(dir_path) as itr:
             for item in itr:
                 if path.isdir(item):
                     # subdir was not touched
                     with pytest.raises(AssertionError):
-                        self.__check_files(item)
+                        check_files(item)
     
     def test_recursive_dir_same_out_dir_mode_zero(self, tmpdir):
-        dir_path, _1 = self.__make_files(tmpdir, "mygame")
-        self.__make_files(dir_path, "some other game")
+        dir_path, _1 = make_files(tmpdir, "mygame")
+        make_files(dir_path, "some other game")
         g = Gdipak()
         g.pack_gdi(dir_path, dir_path, RecursiveMode.PRESERVE_STRUCTURE, False)
-        self.__check_files(dir_path)
+        check_files(dir_path)
         with scandir(dir_path) as itr:
             for item in itr:
                 if path.isdir(item):
-                    self.__check_files(item)
+                    check_files(item)
 
     def test_recursive_dir_same_out_dir_mode_one(self, tmpdir):
-        dir_path, _1 = self.__make_files(tmpdir, "mygame")
-        self.__make_files(dir_path, "some other game")
+        dir_path, _1 = make_files(tmpdir, "mygame")
+        make_files(dir_path, "some other game")
         g = Gdipak()
         # mode is changed implicitly due to in_dir == out_dir
         g.pack_gdi(dir_path, dir_path, RecursiveMode.FLAT_STRUCTURE, False)
-        self.__check_files(dir_path)
+        check_files(dir_path)
         with scandir(dir_path) as itr:
             for item in itr:
                 if path.isdir(item):
-                    self.__check_files(item)
+                    check_files(item)
 
     def test_recursive_dir_different_out_dir_mode_zero(self, tmpdir):
-        sg_dir, _1 = self.__make_files(tmpdir, "some game")
-        sog_dir, _1 = self.__make_files(sg_dir, "some other game")
-        soog_dir, _1 = self.__make_files(sg_dir, "some other other game")
-        sooog_dir, _1 = self.__make_files(soog_dir, "some other other other game")
+        sg_dir, _1 = make_files(tmpdir, "some game")
+        sog_dir, _1 = make_files(sg_dir, "some other game")
+        soog_dir, _1 = make_files(sg_dir, "some other other game")
+        sooog_dir, _1 = make_files(soog_dir, "some other other other game")
         out_dir = tmpdir.mkdir("processed_game")
         g = Gdipak()
         g.pack_gdi(sg_dir, out_dir, RecursiveMode.FLAT_STRUCTURE)
 
         dir_path = path.join(out_dir, path.basename(sg_dir))
-        self.__check_files(dir_path)
+        check_files(dir_path)
         dir_path = path.join(out_dir, path.basename(sog_dir))
-        self.__check_files(dir_path)
+        check_files(dir_path)
         dir_path = path.join(out_dir, path.basename(soog_dir))
-        self.__check_files(dir_path)
+        check_files(dir_path)
         dir_path = path.join(out_dir, path.basename(sooog_dir))
-        self.__check_files(dir_path)
+        check_files(dir_path)
 
     def test_recursive_dir_different_out_dir_mode_one(self, tmpdir):
-        sg_dir, _1 = self.__make_files(tmpdir, "some game")
-        sog_dir, _1 = self.__make_files(sg_dir, "some other game")
-        soog_dir, _1 = self.__make_files(sg_dir, "some other other game")
-        sooog_dir, _1 = self.__make_files(soog_dir, "some other other other game")
+        sg_dir, _1 = make_files(tmpdir, "some game")
+        sog_dir, _1 = make_files(sg_dir, "some other game")
+        soog_dir, _1 = make_files(sg_dir, "some other other game")
+        sooog_dir, _1 = make_files(soog_dir, "some other other other game")
         out_dir = tmpdir.mkdir("processed_game")
         g = Gdipak()
         g.pack_gdi(sg_dir, out_dir, RecursiveMode.PRESERVE_STRUCTURE)
 
         sg_dir_path = path.join(out_dir, path.basename(sg_dir))
-        self.__check_files(sg_dir_path)
+        check_files(sg_dir_path)
         sog_dir_path = path.join(sg_dir_path, path.basename(sog_dir))
-        self.__check_files(sog_dir_path)
+        check_files(sog_dir_path)
         soog_dir_path = path.join(sg_dir_path, path.basename(soog_dir))
-        self.__check_files(soog_dir_path)
+        check_files(soog_dir_path)
         sooog_dir_path = path.join(soog_dir_path, path.basename(sooog_dir))
-        self.__check_files(sooog_dir_path)
+        check_files(sooog_dir_path)
 
     def test_missing_gdi_file(self, tmpdir):
         name = "mygame"
-        dir_path, _1 = self.__make_files(tmpdir, name)
+        dir_path, _1 = make_files(tmpdir, name)
         gdi_path = pypath.local(path.join(dir_path, name + ".gdi"))
         gdi_path.remove()
         g = Gdipak()
@@ -361,7 +318,7 @@ class TestPackGdi:
 
     def test_too_many_gdi_files(self, tmpdir):
         name = "mygame"
-        dir_path, _1 = self.__make_files(tmpdir, name)
+        dir_path, _1 = make_files(tmpdir, name)
         f = dir_path.join("who put this file here.gdi")
         f.write("")
         g = Gdipak()

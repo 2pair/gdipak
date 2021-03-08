@@ -133,3 +133,6 @@ dmypy.json
 
 # Coverage html output
 coverage_html_report
+
+# Mac OS files
+.DS_Store
