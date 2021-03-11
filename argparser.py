@@ -61,17 +61,17 @@ class ArgParser:
                 print("Output directory is not a directory")
                 sys.exit(0)
         
-
-        if args["recursive"] is not None:
+        # if we are modifying the files we must use preserve structure recursive mode
+        if args["modify"] == True:
+            args["recursive"] = RecursiveMode.PRESERVE_STRUCTURE
+        elif args["recursive"] is not None:
             fail_msg = "valid values for \"recursive\" are blank, 0, and 1."
             r_mode = args["recursive"]
             if r_mode != 1 and r_mode != 0:
                 print(fail_msg)
                 sys.exit(0)
-            if "modify" in args:
-                r_mode = 0
             args["recursive"] = RecursiveMode.make(r_mode)
-
+            
         return args
 
 

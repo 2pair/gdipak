@@ -209,7 +209,7 @@ class TestRun:
             args = a.run(["-d", ".", "-m", "-n"])
             assert(args["in_dir"] == ".")
             assert(args["modify"] == True)
+            assert(args["recursive"] == RecursiveMode.PRESERVE_STRUCTURE)
             assert(args["namefile"] == True)
             assert(args["out_dir"] is None)
-            assert(args["recursive"] is None)
         

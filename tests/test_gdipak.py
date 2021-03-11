@@ -271,7 +271,7 @@ class TestPackGdi:
                 if path.isdir(item):
                     check_files(item)
 
-    def test_recursive_dir_different_out_dir_mode_zero(self, tmpdir):
+    def test_recursive_dir_different_out_dir_mode_one(self, tmpdir):
         sg_dir, _1 = make_files(tmpdir, "some game")
         sog_dir, _1 = make_files(sg_dir, "some other game")
         soog_dir, _1 = make_files(sg_dir, "some other other game")
@@ -289,7 +289,7 @@ class TestPackGdi:
         dir_path = path.join(out_dir, path.basename(sooog_dir))
         check_files(dir_path)
 
-    def test_recursive_dir_different_out_dir_mode_one(self, tmpdir):
+    def test_recursive_dir_different_out_dir_mode_zero(self, tmpdir):
         sg_dir, _1 = make_files(tmpdir, "some game")
         sog_dir, _1 = make_files(sg_dir, "some other game")
         soog_dir, _1 = make_files(sg_dir, "some other other game")
