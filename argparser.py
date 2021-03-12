@@ -1,4 +1,5 @@
 
+"""Constructs argument parsing class and validates arguments"""
 import argparse
 import sys
 import os

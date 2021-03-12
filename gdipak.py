@@ -4,6 +4,7 @@ consumption by GDEMU"""
 __version__ = 0.1
 
 from argparser import ArgParser, RecursiveMode
+from gdiparser import GdiParser
 from sys import argv
 import os
 import fnmatch
@@ -23,7 +24,7 @@ class Gdipak:
             recursive   RecursiveMode   If subdirectories should be processed
             namefile    bool            Should a name file be generated
         returns:        None
-        raises:         ValueError
+        raises:         ValueError, SyntaxError
         """
         files = self.get_files_in_dir(in_dir)
         gdi_files = fnmatch.filter(files, "*.gdi")
@@ -31,12 +32,14 @@ class Gdipak:
             raise ValueError("Directory does not contain a gdi file")
         if len(gdi_files) > 1:
             raise ValueError("Directory contains more than one gdi file")
-
-        if namefile:
-            self.write_name_file(out_dir, gdi_files[0])
+        gdi_file = gdi_files[0]
 
         last_dir = os.path.basename(in_dir)
+        if namefile:
+            self.write_name_file(os.path.join(out_dir, last_dir), gdi_file)
+
         for in_file in files:
+            #TODO: Filter out irrelevant files
             in_filename = os.path.basename(in_file)
             out_filename = self.convert_filename(in_filename)
             in_file = os.path.join(in_dir, in_filename)
@@ -44,7 +47,12 @@ class Gdipak:
             if in_dir != out_dir:
                 out_file = os.path.join(out_file, last_dir)
             out_file = os.path.join(out_file, out_filename)
-            self.write_file(in_file, out_file)
+            #gdi file will need special processing
+            if in_file is not gdi_file:
+                self.write_file(in_file, out_file)
+            else:
+                processed_gdi_file = GdiParser.process(in_file)
+                self.write_file(processed_gdi_file, out_file)
 
         if recursive:
             subdirs = self.get_subdirs_in_dir(in_dir)
@@ -58,8 +66,8 @@ class Gdipak:
                 elif recursive == RecursiveMode.PRESERVE_STRUCTURE:
                     sub_outdir = os.path.join(out_dir, last_dir)
                 else:
-                    raise ValueError("Argument 'recursive' is not a mmeber of the enum 'RecursiveMode'")
-                self.pack_gdi(subdir, sub_outdir, recursive)
+                    raise ValueError("Argument 'recursive' is not a member of the enum 'RecursiveMode'")
+                self.pack_gdi(subdir, sub_outdir, recursive, namefile)
 
 
     def write_name_file(self, out_dir, gdi_file):
