@@ -79,36 +79,6 @@ class TestGetSubdirsInDir:
         assert(sub1 in dirs)
         assert(sub2 in dirs)
 
-class TestConvertFilename:
-    def test_convert_gdi(self):
-        g = Gdipak()
-        result = g.convert_filename("Very Good Game ~PAL~.gdi")
-        assert(result == "disc.gdi")
-
-    def test_convert_tracks(self):
-        g = Gdipak()
-        result = g.convert_filename("Very Good Game (Track 1) PAL.raw")
-        assert(result == "track01.raw")
-
-        result = g.convert_filename("track racing game 2-track5-(region and language information).bin")
-        assert(result == "track05.bin")
-
-        result = g.convert_filename("_THE_GAME_TRACK_4_.bin")
-        assert(result == "track04.bin")
-
-        result = g.convert_filename("Sometimes.People.Do.This.Track.12.raw")
-        assert(result == "track12.raw")
-
-    def test_bad_file_type(self):
-        g = Gdipak()
-        with pytest.raises(ValueError):
-            g.convert_filename("Very Good Game.cdi")
-
-    def test_ambiguous_file_name(self):
-        g = Gdipak()
-        with pytest.raises(SyntaxError):
-            g.convert_filename("Very Good Game.bin")
-
 class TestWriteFile:
     def test_same_file(self, tmpdir):
         io_dir = tmpdir.mkdir("Game!")

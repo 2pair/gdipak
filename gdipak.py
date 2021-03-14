@@ -1,19 +1,18 @@
 """Parses GDI formatted game dumps and formats them for
-consumption by GDEMU"""
+consumption by the Madsheep SD card maker for GDEMU"""
 
 __version__ = 0.1
 
 from argparser import ArgParser, RecursiveMode
-from gdiparser import GdiParser
+from fileparser import FileParser
 from sys import argv
 import os
 import fnmatch
-import re
 
 class Gdipak:
     """Includes functions for finding and parsing files that are 
     part of a .gdi game dump"""
-    valid_extensions = (".gdi", ".bin", ".raw")
+    FileParser()
     
     def pack_gdi(self, in_dir, out_dir, recursive=None, namefile=False):
         """ converts and copies or renames all files in a directory 
@@ -39,20 +38,14 @@ class Gdipak:
             self.write_name_file(os.path.join(out_dir, last_dir), gdi_file)
 
         for in_file in files:
-            #TODO: Filter out irrelevant files
-            in_filename = os.path.basename(in_file)
-            out_filename = self.convert_filename(in_filename)
-            in_file = os.path.join(in_dir, in_filename)
+            (out_filename, out_file_contents) = FileParser.parse_file(in_file)
+
             out_file = out_dir
             if in_dir != out_dir:
                 out_file = os.path.join(out_file, last_dir)
             out_file = os.path.join(out_file, out_filename)
-            #gdi file will need special processing
-            if in_file is not gdi_file:
-                self.write_file(in_file, out_file)
-            else:
-                processed_gdi_file = GdiParser.process(in_file)
-                self.write_file(processed_gdi_file, out_file)
+
+            self.write_file(out_file_contents, out_file)
 
         if recursive:
             subdirs = self.get_subdirs_in_dir(in_dir)
@@ -109,26 +102,6 @@ class Gdipak:
                     f_out.write(f_in.read())
 
 
-    def convert_filename(self, in_filename):
-        """ Based on the input filename generates an output filename
-        arguments:  
-            in_filename  str    A string representing a filename, with extension
-        returns:         str    A string that GDEMU expects for that file's name
-        raises:          ValueError, SyntaxError
-        """
-        name, ext = os.path.splitext(in_filename)
-        ext = ext.lower()
-        if not ext or ext not in self.valid_extensions:
-            raise ValueError("Invalid file type")
-        if ext == ".gdi":
-            return "disc.gdi"
-        regex = re.compile(r"^[\s\S]*track[\s\S]*?([\d]+)", re.IGNORECASE)
-        result = regex.match(name)
-        if not result:
-            raise SyntaxError("Filename does not contain track information")
-        return "track" + result.group(1).zfill(2) + ext
-
-
     def get_files_in_dir(self, directory):
         """ Searches in a given directory for files relevent to the gdi format
         arguments:  
@@ -141,7 +114,7 @@ class Gdipak:
             for item in itr:
                 if not item.is_file():
                     continue
-                for ext in self.valid_extensions:
+                for ext in FileParser.valid_extensions:
                     if fnmatch.fnmatch(item.name, "*" + ext):
                         files.append(item.name)
         return files

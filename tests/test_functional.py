@@ -5,7 +5,7 @@ from utils import make_files, check_files
 
 import gdipak
 
-class TestGdiPak:
+class TestGdiPakFunctional:
     def test_recursive_dir_different_out_dir_mode_zero(self, tmpdir, monkeypatch):
         sg_dir, _1, sg_exts = make_files(tmpdir, "some game")
         sog_dir, _1, sog_exts = make_files(sg_dir, "some other game")
