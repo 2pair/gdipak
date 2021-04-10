@@ -8,7 +8,7 @@ from fileparser import FileParser
 from sys import argv
 import os
 import fnmatch
-
+import pdb
 class Gdipak:
     """Includes functions for finding and parsing files that are 
     part of a .gdi game dump"""
@@ -37,15 +37,21 @@ class Gdipak:
         if namefile:
             self.write_name_file(os.path.join(out_dir, last_dir), gdi_file)
 
+        pdb.set_trace()
         for in_file in files:
-            (out_filename, out_file_contents) = FileParser.parse_file(in_file)
+            (out_filename, src_file) = FileParser.parse_file(in_file)
+            if not os.path.dirname(src_file):
+                src_file = os.path.join(in_dir, src_file)
 
             out_file = out_dir
             if in_dir != out_dir:
                 out_file = os.path.join(out_file, last_dir)
             out_file = os.path.join(out_file, out_filename)
 
-            self.write_file(out_file_contents, out_file)
+            # TODO: This gets really confusing if we are modifying files. src_file might be in a tmp directory
+            # and out_file is the name that we want to end up with. However, This might mean this function doesn't
+            # know the original file that should now get deleted!
+            self.write_file(src_file, out_file)
 
         if recursive:
             subdirs = self.get_subdirs_in_dir(in_dir)
@@ -81,7 +87,7 @@ class Gdipak:
         with open(out_file, 'w') as f_out:
             f_out.write("")
         
-
+    
     def write_file(self, in_file, out_file):
         """ Generates a file with the given contents
         arguments:  
@@ -105,8 +111,8 @@ class Gdipak:
     def get_files_in_dir(self, directory):
         """ Searches in a given directory for files relevent to the gdi format
         arguments:  
-            directory   str     A path-like object for a directory to search in
-        returns:        str     A  list of file names or None if no files found
+            directory   str         A path-like object for a directory to search in
+        returns:        list(str)   A  list of file paths or None if no files found
         raises:         None
         """
         files = list()
@@ -116,7 +122,7 @@ class Gdipak:
                     continue
                 for ext in FileParser.valid_extensions:
                     if fnmatch.fnmatch(item.name, "*" + ext):
-                        files.append(item.name)
+                        files.append(item.path)
         return files
 
 

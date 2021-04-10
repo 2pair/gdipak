@@ -55,7 +55,7 @@ class ArgParser:
             sys.exit(0)
 
         if args["out_dir"] is None and args["modify"] is None:
-            print("Neither output directory or modify option was specified")
+            print("Neither output directory nor modify option was specified")
             sys.exit(0)
         elif args["out_dir"] is not None:
             if not os.path.isdir(args["out_dir"]):

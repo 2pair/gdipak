@@ -49,7 +49,7 @@ def check_files(directory, expected_exts):
     with scandir(directory) as itr:
         for item in itr:
             if path.isfile(item):
-                ext =check_filename(item, dirname)
+                ext = check_filename(item.name, dirname)
                 if ext in exts:
                     exts[ext] += 1
             elif path.isdir(item):

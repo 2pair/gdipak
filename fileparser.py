@@ -13,20 +13,20 @@ class FileParser:
     gdi_file_ref_regex = re.compile(r"\"[\s\S]*?track[\s\S]*?([\d]+)[\s\S]*?\.(?:bin)|(?:raw)\"", re.IGNORECASE)
 
     @classmethod
-    def parse_file(FileParser, filename):
+    def parse_file(FileParser, file_path):
         """ Based on the input filetype performs the required type of parsing
         arguments:  
-            filename     str    A string representing the path to a file, with extension
+            file_path    str    A string representing the path to a file, with extension
         returns:         tuple(str str)    The name of the final output file and the location 
                                            on disk where the file's contents are stored. This 
-                                           may be a temporary directory or the original files location.
+                                           may be a temporary directory or the original file's location.
         raises:          ValueError, SyntaxError
         """
-        _1, ext = path.splitext(filename)
+        _1, ext = path.splitext(file_path)
         if ext == ".gdi":
-            return (FileParser.convert_filename(filename), FileParser.process_gdi(filename))
+            return (FileParser.convert_filename(file_path), FileParser.process_gdi(file_path))
         elif ext in FileParser.valid_extensions:
-            return (FileParser.convert_filename(filename), filename)
+            return (FileParser.convert_filename(file_path), file_path)
         else:
             raise ValueError("Invalid file type")
 
@@ -52,14 +52,15 @@ class FileParser:
 
 
     @classmethod
-    def convert_filename(FileParser, filename):
+    def convert_filename(FileParser, file_path):
         """ Based on the input filename generates an output filename
         arguments:  
-            in_filename  str    A string representing a path to a file, with extension
+            file_path    str    A string representing a path to a file, with extension
         returns:         str    A string that GDEMU expects for that file's name
         raises:          ValueError, SyntaxError
         """
-        name, ext = path.splitext(filename)
+        file_dir, file_name = path.split(file_path)
+        name, ext = path.splitext(file_name)
         ext = ext.lower()
         if not ext or ext not in FileParser.valid_extensions:
             raise ValueError("Invalid file type")
@@ -69,4 +70,4 @@ class FileParser:
         if not result:
             raise SyntaxError("Filename does not contain track information")
         track_num = str(int(result.group(1))) # removes leading zeros
-        return "track" + track_num.zfill(2) + ext
+        return path.join(file_dir, "track" + track_num.zfill(2) + ext)

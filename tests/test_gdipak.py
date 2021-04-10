@@ -10,31 +10,35 @@ from argparser import RecursiveMode
 
 class TestGetFilesInDir:
     def test_alphanumeric(self, tmpdir):
-        dirname = "gamedir"
-        filename = "aBcD1234.gdi"
-        p = tmpdir.mkdir(dirname).join(filename)
+        dir_name = "gamedir"
+        file_name = "aBcD1234.gdi"
+        p = tmpdir.mkdir(dir_name).join(file_name)
         p.write("")
         dir_path = tmpdir.listdir()[0]
         g = Gdipak()
         files = g.get_files_in_dir(dir_path)
         assert(len(files) == 1)
-        assert(files[0] == filename)
+        out_file_dir, out_file_name = path.split(files[0])
+        assert(out_file_name == file_name)
+        assert(out_file_dir == path.realpath(dir_path))
 
     def test_special_chars(self, tmpdir):
-        dirname = "gamedir 2! (The Redirening)"
-        filename = "123 !@#$%^&()~S{}[]-=_+'`.bin"
-        p = tmpdir.mkdir(dirname).join(filename)
+        dir_name = "gamedir 2! (The Redirening)"
+        file_name = "123 !@#$%^&()~S{}[]-=_+'`.bin"
+        p = tmpdir.mkdir(dir_name).join(file_name)
         p.write("")
         dir_path = tmpdir.listdir()[0]
         g = Gdipak()
         files = g.get_files_in_dir(dir_path)
         assert(len(files) == 1)
-        assert(files[0] == filename)
+        out_file_dir, out_file_name = path.split(files[0])
+        assert(out_file_name == file_name)
+        assert(out_file_dir == path.realpath(dir_path))
 
     def test_unrelated_file(self, tmpdir):
-        dirname = "gamedirrrr"
-        filename = "Vacation Photo-1528.jpg"
-        p = tmpdir.mkdir(dirname).join(filename)
+        dir_name = "gamedirrrr"
+        file_name = "Vacation Photo-1528.jpg"
+        p = tmpdir.mkdir(dir_name).join(file_name)
         p.write("")
         dir_path = tmpdir.listdir()[0]
         g = Gdipak()
@@ -42,23 +46,23 @@ class TestGetFilesInDir:
         assert(len(files) == 0)
 
     def test_multi_files(self, tmpdir):
-        dirname = "gamedir"
-        filenames = (
+        dir_name = "gamedir"
+        file_names = (
             "mygame.gdi",
             "mygame(track1).bin",
             "mygame(track2).bin",
             "mygame(track3).raw",
             "mygame.txt")
-        tmp_dir = tmpdir.mkdir(dirname)
-        for f in filenames:
+        tmp_dir = tmpdir.mkdir(dir_name)
+        for f in file_names:
             p = tmp_dir.join(f)
             p.write("")
         dir_path = tmpdir.listdir()[0]
         g = Gdipak()
         files = g.get_files_in_dir(dir_path)
-        assert(len(files) == (len(filenames) -1))
+        assert(len(files) == (len(file_names) -1))
         for f in files:
-            assert(f != filenames[len(filenames) - 1])
+            assert(f != file_names[len(file_names) - 1])
 
 class TestGetSubdirsInDir:
     def test_dirs_dont_exist(self, tmpdir):
@@ -88,7 +92,7 @@ class TestWriteFile:
         
         out_filename = path.join(io_dir, "disc.gdi")
         g = Gdipak()
-        g.write_file(in_file, out_filename)
+        g.write_file(in_file.realpath(), out_filename)
 
         #original file nolonger exists
         assert(not in_file.check())
@@ -103,7 +107,7 @@ class TestWriteFile:
         out_dir = tmpdir.mkdir("outputdir")
         out_filename = path.join(out_dir, "disc.gdi")
         g = Gdipak()
-        g.write_file(in_file, out_filename)
+        g.write_file(in_file.realpath(), out_filename)
 
         #original file still exists
         assert(in_file.check())
@@ -119,7 +123,7 @@ class TestWriteFile:
         out_dir = path.join(tmpdir, "outputdir")
         out_filename = path.join(out_dir, "disc.gdi")
         g = Gdipak()
-        g.write_file(in_file, out_filename)
+        g.write_file(in_file.realpath(), out_filename)
 
         #original file still exists
         assert(in_file.check())

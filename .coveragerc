@@ -1,5 +1,5 @@
 [run]
-command_line = -m pytest
+command_line = -m pytest -k test_single_dir_same_out_dir -s
 
 source=
     .
