@@ -8,20 +8,20 @@ from fileparser import FileParser
 from sys import argv
 import os
 import fnmatch
-import pdb
+
 class Gdipak:
     """Includes functions for finding and parsing files that are 
     part of a .gdi game dump"""
-    FileParser()
     
-    def pack_gdi(self, in_dir, out_dir, recursive=None, namefile=False):
+    def pack_gdi(self, in_dir, out_dir, recursive=None, namefile=False, modify_files=False):
         """ converts and copies or renames all files in a directory 
         and optionally subdirectories. If indir == out_dir files will be modified.
         arguments: 
-            in_dir      str             The directory to process
-            out_dir     str             The output directory
-            recursive   RecursiveMode   If subdirectories should be processed
-            namefile    bool            Should a name file be generated
+            in_dir          str             The directory to process
+            out_dir         str             The output directory
+            recursive       RecursiveMode   If subdirectories should be processed
+            namefile        bool            Should a name file be generated
+            modify_files    bool            If the files in the input directory should be modified
         returns:        None
         raises:         ValueError, SyntaxError
         """
@@ -37,28 +37,25 @@ class Gdipak:
         if namefile:
             self.write_name_file(os.path.join(out_dir, last_dir), gdi_file)
 
-        pdb.set_trace()
         for in_file in files:
-            (out_filename, src_file) = FileParser.parse_file(in_file)
-            if not os.path.dirname(src_file):
-                src_file = os.path.join(in_dir, src_file)
+            out_filename = FileParser.convert_filename(in_file)
+            out_file_contents = FileParser.get_output_file_contents(in_file)
 
             out_file = out_dir
             if in_dir != out_dir:
                 out_file = os.path.join(out_file, last_dir)
             out_file = os.path.join(out_file, out_filename)
 
-            # TODO: This gets really confusing if we are modifying files. src_file might be in a tmp directory
-            # and out_file is the name that we want to end up with. However, This might mean this function doesn't
-            # know the original file that should now get deleted!
-            self.write_file(src_file, out_file)
+            if modify_files:
+                os.rename(in_file, out_filename)
+
+            self.write_file(out_file_contents, out_file)
 
         if recursive:
             subdirs = self.get_subdirs_in_dir(in_dir)
             for subdir in subdirs:
                 sub_outdir = str()
-                # in_dir == out_dir means modify files
-                if in_dir == out_dir:
+                if modify_files:
                     sub_outdir = subdir
                 elif recursive == RecursiveMode.FLAT_STRUCTURE:
                     sub_outdir = out_dir
@@ -96,16 +93,15 @@ class Gdipak:
         returns:        None
         raises:         None
         """
-        in_dir = os.path.dirname(in_file)
+        if in_file == out_file:
+            return
+
         out_dir = os.path.dirname(out_file)
-        if in_dir == out_dir:
-            os.rename(in_file, out_file)
-        else:
-            if not os.path.exists(out_dir):
-                os.makedirs(os.path.realpath(out_dir))
-            with open(in_file, 'rb') as f_in:
-                with open(out_file, 'wb') as f_out:
-                    f_out.write(f_in.read())
+        if not os.path.exists(out_dir):
+            os.makedirs(os.path.realpath(out_dir))
+        with open(in_file, 'rb') as f_in:
+            with open(out_file, 'wb') as f_out:
+                f_out.write(f_in.read())
 
 
     def get_files_in_dir(self, directory):
@@ -150,14 +146,15 @@ def main():
     in_dir = args["in_dir"]
     recursive = args["recursive"]
     namefile = args["namefile"]
+    modify = args["modify"]
     out_dir = str()
-    if not args["modify"]:
+    if not modify:
         out_dir = args["out_dir"]
     else:
         out_dir = in_dir
 
     g = Gdipak()
-    g.pack_gdi(in_dir, out_dir, recursive, namefile)
+    g.pack_gdi(in_dir, out_dir, recursive, namefile, modify)
 
 
 if __name__ == "__main__":

@@ -13,20 +13,19 @@ class FileParser:
     gdi_file_ref_regex = re.compile(r"\"[\s\S]*?track[\s\S]*?([\d]+)[\s\S]*?\.(?:bin)|(?:raw)\"", re.IGNORECASE)
 
     @classmethod
-    def parse_file(FileParser, file_path):
+    def get_output_file_contents(FileParser, file_path):
         """ Based on the input filetype performs the required type of parsing
         arguments:  
             file_path    str    A string representing the path to a file, with extension
-        returns:         tuple(str str)    The name of the final output file and the location 
-                                           on disk where the file's contents are stored. This 
-                                           may be a temporary directory or the original file's location.
+        returns:         str    The location on disk where the file's contents are stored. This 
+                                may be a temporary directory or the original file's location.
         raises:          ValueError, SyntaxError
         """
         _1, ext = path.splitext(file_path)
         if ext == ".gdi":
-            return (FileParser.convert_filename(file_path), FileParser.process_gdi(file_path))
+            return path.realpath(FileParser.process_gdi(file_path))
         elif ext in FileParser.valid_extensions:
-            return (FileParser.convert_filename(file_path), file_path)
+            return path.realpath(file_path)
         else:
             raise ValueError("Invalid file type")
 

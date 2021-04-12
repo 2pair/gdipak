@@ -169,10 +169,6 @@ class TestPackGdi:
     def test_single_dir_same_out_dir_gen_namefile(self, tmpdir):
         dir_path, _1, exts = make_files(tmpdir, "mygame")
         g = Gdipak()
-        print(dir_path)
-        with scandir(dir_path) as itr:
-            for item in itr:
-                print(item)
         g.pack_gdi(dir_path, dir_path, False, True)
 
         #dir name didn't change
