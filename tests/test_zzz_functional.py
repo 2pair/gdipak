@@ -1,9 +1,9 @@
 """end to end functional tests"""
 
 from os import path
-from utils import make_files, check_files
+from tests.utils import make_files, check_files
 
-import gdipak
+import gdipak.gdipak
 
 class TestGdiPakFunctional:
     def test_recursive_dir_different_out_dir_mode_zero(self, tmpdir, monkeypatch):

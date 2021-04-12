@@ -4,9 +4,9 @@ import pytest
 from os import path, scandir
 from py import path as pypath
 
-from utils import make_files, check_files
-from gdipak import Gdipak
-from argparser import RecursiveMode
+from tests.utils import make_files, check_files
+from gdipak.gdipak import Gdipak
+from gdipak.argparser import RecursiveMode
 
 class TestGetFilesInDir:
     def test_alphanumeric(self, tmpdir):

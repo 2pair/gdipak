@@ -4,8 +4,8 @@ import pytest
 from os import path
 from argparse import ArgumentParser
 
-from argparser import ArgParser
-from argparser import RecursiveMode
+from gdipak.argparser import ArgParser
+from gdipak.argparser import RecursiveMode
 
 class TestRecursiveMode:
     def test_preserve_structure(self):

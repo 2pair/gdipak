@@ -1,7 +1,7 @@
 
 import pytest
-from fileparser import FileParser
-from os import path, rename
+from gdipak.fileparser import FileParser
+from os import path
 
 class TestConvertFilename:
     def test_convert_gdi(self):

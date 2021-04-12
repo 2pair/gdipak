@@ -3,8 +3,8 @@ consumption by the Madsheep SD card maker for GDEMU"""
 
 __version__ = 0.1
 
-from argparser import ArgParser, RecursiveMode
-from fileparser import FileParser
+from gdipak.argparser import ArgParser, RecursiveMode
+from gdipak.fileparser import FileParser
 from sys import argv
 import os
 import fnmatch
