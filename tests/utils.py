@@ -1,12 +1,14 @@
 from os import path, scandir
 
+
 def make_files(tmpdir, game_name):
     """creates a typical game directory"""
     filenames = (
         game_name + ".gdi",
         game_name + "(track1).bin",
         game_name + "(track2).bin",
-        game_name + "(track3).raw")
+        game_name + "(track3).raw",
+    )
     game_dir = tmpdir.mkdir(game_name)
     file_extensions = list()
     for f in filenames:
@@ -18,32 +20,34 @@ def make_files(tmpdir, game_name):
 
     return game_dir, filenames, file_extensions
 
+
 def check_filename(file, dirname):
     """makes sure the output file name is correct"""
     filename = path.basename(file)
     name, ext = path.splitext(filename)
     if ext.lower() == ".gdi":
-        assert(name == "disc")
+        assert name == "disc"
         return ".gdi"
     elif ext.lower() == ".raw" or ext.lower() == ".bin":
-        assert(name[:5] == "track")
+        assert name[:5] == "track"
         try:
             int(name[5:])
             if ext.lower() == ".raw":
                 return ".raw"
             else:
                 return ".bin"
-        except:                                 # pragma: no cover
-            assert(False)
+        except ValueError: # pragma: no cover
+            assert False
     elif ext.lower() == ".txt":
-        assert(name == dirname)
+        assert name == dirname
         return ".txt"
-    else:                                       # pragma: no cover
+    else:  # pragma: no cover
         print("name was: " + name)
-        assert(False)
+        assert False
+
 
 def check_files(directory, expected_exts):
-    """ validates the filenames in a dir"""
+    """validates the filenames in a dir"""
     exts = dict.fromkeys(expected_exts, 0)
     dirname = path.basename(directory)
     with scandir(directory) as itr:
@@ -54,8 +58,8 @@ def check_files(directory, expected_exts):
                     exts[ext] += 1
             elif path.isdir(item):
                 continue
-            else:                               # pragma: no cover
-                assert(False)
+            else:  # pragma: no cover
+                assert False
 
     for count in exts.values():
-        assert(count > 0)
+        assert count > 0

@@ -8,6 +8,7 @@ from tests.utils import make_files, check_files
 from gdipak.gdipak import Gdipak
 from gdipak.argparser import RecursiveMode
 
+
 class TestGetFilesInDir:
     def test_alphanumeric(self, tmpdir):
         dir_name = "gamedir"
@@ -17,10 +18,10 @@ class TestGetFilesInDir:
         dir_path = tmpdir.listdir()[0]
         g = Gdipak()
         files = g.get_files_in_dir(dir_path)
-        assert(len(files) == 1)
+        assert len(files) == 1
         out_file_dir, out_file_name = path.split(files[0])
-        assert(out_file_name == file_name)
-        assert(out_file_dir == path.realpath(dir_path))
+        assert out_file_name == file_name
+        assert out_file_dir == path.realpath(dir_path)
 
     def test_special_chars(self, tmpdir):
         dir_name = "gamedir 2! (The Redirening)"
@@ -30,10 +31,10 @@ class TestGetFilesInDir:
         dir_path = tmpdir.listdir()[0]
         g = Gdipak()
         files = g.get_files_in_dir(dir_path)
-        assert(len(files) == 1)
+        assert len(files) == 1
         out_file_dir, out_file_name = path.split(files[0])
-        assert(out_file_name == file_name)
-        assert(out_file_dir == path.realpath(dir_path))
+        assert out_file_name == file_name
+        assert out_file_dir == path.realpath(dir_path)
 
     def test_unrelated_file(self, tmpdir):
         dir_name = "gamedirrrr"
@@ -43,7 +44,7 @@ class TestGetFilesInDir:
         dir_path = tmpdir.listdir()[0]
         g = Gdipak()
         files = g.get_files_in_dir(dir_path)
-        assert(len(files) == 0)
+        assert len(files) == 0
 
     def test_multi_files(self, tmpdir):
         dir_name = "gamedir"
@@ -52,7 +53,8 @@ class TestGetFilesInDir:
             "mygame(track1).bin",
             "mygame(track2).bin",
             "mygame(track3).raw",
-            "mygame.txt")
+            "mygame.txt",
+        )
         tmp_dir = tmpdir.mkdir(dir_name)
         for f in file_names:
             p = tmp_dir.join(f)
@@ -60,9 +62,10 @@ class TestGetFilesInDir:
         dir_path = tmpdir.listdir()[0]
         g = Gdipak()
         files = g.get_files_in_dir(dir_path)
-        assert(len(files) == (len(file_names) -1))
+        assert len(files) == (len(file_names) - 1)
         for f in files:
-            assert(f != file_names[len(file_names) - 1])
+            assert f != file_names[len(file_names) - 1]
+
 
 class TestGetSubdirsInDir:
     def test_dirs_dont_exist(self, tmpdir):
@@ -70,7 +73,7 @@ class TestGetSubdirsInDir:
         dir_path = tmpdir.listdir()[0]
         g = Gdipak()
         dirs = g.get_subdirs_in_dir(dir_path)
-        assert(len(dirs) == 0)
+        assert len(dirs) == 0
 
     def test_dirs_exist(self, tmpdir):
         base = tmpdir.mkdir("basedir")
@@ -79,9 +82,10 @@ class TestGetSubdirsInDir:
         dir_path = tmpdir.listdir()[0]
         g = Gdipak()
         dirs = g.get_subdirs_in_dir(dir_path)
-        assert(len(dirs) == 2)
-        assert(sub1 in dirs)
-        assert(sub2 in dirs)
+        assert len(dirs) == 2
+        assert sub1 in dirs
+        assert sub2 in dirs
+
 
 class TestWriteFile:
     def test_same_file(self, tmpdir):
@@ -89,47 +93,48 @@ class TestWriteFile:
         in_file = io_dir.join("Game!.gdi")
         contents = b"This is the contents of the file"
         in_file.write(contents)
-        
+
         out_filename = path.join(io_dir, "disc.gdi")
         g = Gdipak()
         g.write_file(in_file.realpath(), out_filename)
 
-        #original file nolonger exists
-        assert(not in_file.check())
+        # original file nolonger exists
+        assert not in_file.check()
         with open(out_filename, "br") as f:
-            assert(contents == f.read())
+            assert contents == f.read()
 
     def test_different_file(self, tmpdir):
         in_dir = tmpdir.mkdir("Game!")
         in_file = in_dir.join("Game!.gdi")
         in_file.write(b"This is the contents of the file")
-        
+
         out_dir = tmpdir.mkdir("outputdir")
         out_filename = path.join(out_dir, "disc.gdi")
         g = Gdipak()
         g.write_file(in_file.realpath(), out_filename)
 
-        #original file still exists
-        assert(in_file.check())
+        # original file still exists
+        assert in_file.check()
         with open(in_file, "br") as f_in:
             with open(out_filename, "br") as f_out:
-                assert(f_in.read() == f_out.read())
+                assert f_in.read() == f_out.read()
 
     def test_missing_directory(self, tmpdir):
         in_dir = tmpdir.mkdir("Game!")
         in_file = in_dir.join("Game!.gdi")
         in_file.write(b"This is the contents of the file")
-        
+
         out_dir = path.join(tmpdir, "outputdir")
         out_filename = path.join(out_dir, "disc.gdi")
         g = Gdipak()
         g.write_file(in_file.realpath(), out_filename)
 
-        #original file still exists
-        assert(in_file.check())
+        # original file still exists
+        assert in_file.check()
         with open(in_file, "br") as f_in:
             with open(out_filename, "br") as f_out:
-                assert(f_in.read() == f_out.read())
+                assert f_in.read() == f_out.read()
+
 
 class TestWriteNameFile:
     def test_out_dir_exists_bare_gdi_file_str(self, tmpdir):
@@ -138,7 +143,7 @@ class TestWriteNameFile:
         gdi_filename = game_name + ".gdi"
         g = Gdipak()
         g.write_name_file(out_dir, gdi_filename)
-        assert(path.isfile(path.join(out_dir, game_name + ".txt")))
+        assert path.isfile(path.join(out_dir, game_name + ".txt"))
 
     def test_out_dir_exists_gdi_file_path(self, tmpdir):
         game_name = "Morgan the Bull And Stanley the Bear Go To Market"
@@ -146,7 +151,7 @@ class TestWriteNameFile:
         gdi_filepath = path.join(out_dir, game_name + ".gdi")
         g = Gdipak()
         g.write_name_file(out_dir, gdi_filepath)
-        assert(path.isfile(path.join(out_dir, game_name + ".txt")))
+        assert path.isfile(path.join(out_dir, game_name + ".txt"))
 
     def test_out_dir_doesnt_exist_bare_gdi_file_str(self, tmpdir):
         game_name = "Somebody Once Told Me - Allstars!"
@@ -154,7 +159,8 @@ class TestWriteNameFile:
         gdi_filename = game_name + ".gdi"
         g = Gdipak()
         g.write_name_file(out_dir, gdi_filename)
-        assert(path.isfile(path.join(out_dir, game_name + ".txt")))
+        assert path.isfile(path.join(out_dir, game_name + ".txt"))
+
 
 class TestPackGdi:
     def test_single_dir_same_out_dir(self, tmpdir):
@@ -162,8 +168,8 @@ class TestPackGdi:
         g = Gdipak()
         g.pack_gdi(dir_path, dir_path, False, False)
 
-        #dir name didn't change
-        assert(tmpdir.listdir()[0] == dir_path)
+        # dir name didn't change
+        assert tmpdir.listdir()[0] == dir_path
         check_files(dir_path, exts)
 
     def test_single_dir_same_out_dir_gen_namefile(self, tmpdir):
@@ -171,8 +177,8 @@ class TestPackGdi:
         g = Gdipak()
         g.pack_gdi(dir_path, dir_path, False, True)
 
-        #dir name didn't change
-        assert(tmpdir.listdir()[0] == dir_path)
+        # dir name didn't change
+        assert tmpdir.listdir()[0] == dir_path
         check_files(dir_path, exts)
 
     def test_single_dir_same_out_dir_default_args(self, tmpdir):
@@ -180,8 +186,8 @@ class TestPackGdi:
         g = Gdipak()
         g.pack_gdi(dir_path, dir_path)
 
-        #dir name didn't change
-        assert(tmpdir.listdir()[0] == dir_path) 
+        # dir name didn't change
+        assert tmpdir.listdir()[0] == dir_path
         check_files(dir_path, exts)
 
     def test_single_dir_different_out_dir(self, tmpdir):
@@ -190,10 +196,10 @@ class TestPackGdi:
         g = Gdipak()
         g.pack_gdi(in_dir, out_dir)
 
-        #src files didn't change
-        with scandir(in_dir) as itr: 
+        # src files didn't change
+        with scandir(in_dir) as itr:
             for item in itr:
-                assert(path.basename(item) in in_filenames)
+                assert path.basename(item) in in_filenames
         dir_path = path.join(out_dir, path.basename(in_dir))
         check_files(dir_path, exts)
 
@@ -217,7 +223,7 @@ class TestPackGdi:
                     # subdir was not touched
                     with pytest.raises(AssertionError):
                         check_files(item, exts)
-    
+
     def test_recursive_dir_same_out_dir_mode_zero(self, tmpdir):
         dir_path, _1, exts = make_files(tmpdir, "mygame")
         make_files(dir_path, "some other game")

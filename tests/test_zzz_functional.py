@@ -5,6 +5,7 @@ from tests.utils import make_files, check_files
 
 import gdipak.gdipak
 
+
 class TestGdiPakFunctional:
     def test_recursive_dir_different_out_dir_mode_zero(self, tmpdir, monkeypatch):
         sg_dir, _1, sg_exts = make_files(tmpdir, "some game")
@@ -13,9 +14,9 @@ class TestGdiPakFunctional:
         sooog_dir, _1, sooog_exts = make_files(soog_dir, "some other other other game")
         out_dir = tmpdir.mkdir("processed_game")
 
-        monkeypatch.setattr("gdipak.argv", 
-            ["pytest", "-d", str(sg_dir), "-o", str(out_dir),
-            "-r", "0"])
+        monkeypatch.setattr(
+            "gdipak.argv", ["pytest", "-d", str(sg_dir), "-o", str(out_dir), "-r", "0"]
+        )
         gdipak.main()
 
         sg_dir_path = path.join(out_dir, path.basename(sg_dir))
@@ -33,10 +34,11 @@ class TestGdiPakFunctional:
         soog_dir, _1, soog_exts = make_files(sg_dir, "some other other game")
         sooog_dir, _1, sooog_exts = make_files(soog_dir, "some other other other game")
         out_dir = tmpdir.mkdir("processed_game")
-        
-        monkeypatch.setattr("gdipak.argv", 
-            ["pytest", "-d", str(sg_dir), "-o", str(out_dir),
-            "-r", "1", "-n"])
+
+        monkeypatch.setattr(
+            "gdipak.argv",
+            ["pytest", "-d", str(sg_dir), "-o", str(out_dir), "-r", "1", "-n"],
+        )
         gdipak.main()
 
         dir_path = path.join(out_dir, path.basename(sg_dir))
