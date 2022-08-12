@@ -1,8 +1,22 @@
+"""Functions used across various unit tests."""
+
 from os import path, scandir
+from typing import List, Tuple
 
 
-def make_files(tmpdir, game_name):
-    """creates a typical game directory"""
+def make_files(tmpdir: str, game_name: str) -> Tuple[str, List[str], List[str]]:
+    """creates a typical game directory
+
+    Args:
+        tmpdir: A directory where the game files' directory will be made.
+        game_name: What's this bad boy gonna be called?
+
+    Returns:
+        3-tuple:
+        - The path to the game's directory
+        - A list of filenames that were created
+        - A list of file extensions that were created (used in some tests)
+    """
     filenames = (
         game_name + ".gdi",
         game_name + "(track1).bin",
@@ -10,33 +24,40 @@ def make_files(tmpdir, game_name):
         game_name + "(track3).raw",
     )
     game_dir = tmpdir.mkdir(game_name)
-    file_extensions = list()
-    for f in filenames:
-        p = game_dir.join(f)
-        p.write("")
-        _1, ext = path.splitext(f)
+    file_extensions = []
+    for filename in filenames:
+        file_path = game_dir.join(filename)
+        file_path.write("")
+        _1, ext = path.splitext(filename)
         if ext not in file_extensions:
             file_extensions.append(ext)
 
     return game_dir, filenames, file_extensions
 
 
-def check_filename(file, dirname):
-    """makes sure the output file name is correct"""
+def check_filename(file: str, dirname: str) -> str:
+    """makes sure the output file name is correct
+
+    Args:
+        file: The path to a file or a filename.
+        dirname: The name of the directory the file is in.
+
+    Returns:
+        The file's extension if the filename passed inspection.
+    """
     filename = path.basename(file)
     name, ext = path.splitext(filename)
     if ext.lower() == ".gdi":
         assert name == "disc"
         return ".gdi"
-    elif ext.lower() == ".raw" or ext.lower() == ".bin":
+    if ext.lower() == ".raw" or ext.lower() == ".bin":
         assert name[:5] == "track"
         try:
             int(name[5:])
             if ext.lower() == ".raw":
                 return ".raw"
-            else:
-                return ".bin"
-        except ValueError: # pragma: no cover
+            return ".bin"
+        except ValueError:  # pragma: no cover
             assert False
     elif ext.lower() == ".txt":
         assert name == dirname
@@ -46,8 +67,13 @@ def check_filename(file, dirname):
         assert False
 
 
-def check_files(directory, expected_exts):
-    """validates the filenames in a dir"""
+def check_files(directory: str, expected_exts: List[str]) -> None:
+    """validates the filenames in a dir
+
+    Args:
+        directory: The path to a game's directory.
+        expected_exts: The non-exclusive list of extensions to check.
+    """
     exts = dict.fromkeys(expected_exts, 0)
     dirname = path.basename(directory)
     with scandir(directory) as itr:

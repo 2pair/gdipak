@@ -6,7 +6,9 @@ from os import path
 from tempfile import mkstemp
 
 
-class FileParser:
+class FileProcessor:
+    """Parses and converts files into a format required by the SD card maker."""
+
     valid_extensions = (".gdi", ".bin", ".raw")
     # This regex takes any string of characters that contains "track" and a
     # number and captures the track number
@@ -21,40 +23,43 @@ class FileParser:
     )
 
     @classmethod
-    def get_output_file_contents(FileParser, file_path):
-        """Based on the input filetype performs the required type of parsing
-        arguments:
+    def get_output_file_contents(cls, file_path: str) -> str:
+        """Based on the input filetype performs the required type of parsing.
+
+        Args:
             file_path (str): A string representing the path to a file, with extension
-        returns:
+
+        Returns:
             str: The location on disk where the file's contents are stored. This may be
                  a temporary directory or the original file's location.
-        raises:
+
+        Raises:
             ValueError, SyntaxError
         """
         _1, ext = path.splitext(file_path)
         if ext == ".gdi":
-            return path.realpath(FileParser.process_gdi(file_path))
-        elif ext in FileParser.valid_extensions:
+            return path.realpath(cls.process_gdi(file_path))
+        if ext in cls.valid_extensions:
             return path.realpath(file_path)
-        else:
-            raise ValueError("Invalid file type")
+        raise ValueError("Invalid file type")
 
     @classmethod
-    def process_gdi(FileParser, gdi_file):
+    def process_gdi(cls, gdi_file: str) -> str:
         """processes the contents of the gdi file to sanitize track names and remove
         white space to comply with SD card maker expectations
-        arguments:
+
+        Args:
             gdi_file (str): A string representing the path to a gdi filename, with
                             extension
-        returns:
+        Returns:
             str: A string representing the path to the processed file contents. This
                  is a temporary file. The original file is not modified.
-        raises:
+        Raises:
             ValueError, SyntaxError
         """
         tmp_file, tmp_path = mkstemp()
-        with open(gdi_file, "r") as f_gdi:
-            with open(tmp_file, "w") as f_tmp:
+        with open(gdi_file, "r", encoding="UTF-8") as f_gdi:
+            with open(tmp_file, "w", encoding="UTF-8") as f_tmp:
                 for line in f_gdi:
                     # TODO: process the line.
                     f_tmp.write(line)
@@ -62,7 +67,7 @@ class FileParser:
                 return tmp_path
 
     @classmethod
-    def convert_filename(FileParser, file_path):
+    def convert_filename(cls, file_path: str) -> str:
         """Based on the input filename, generates an output filename
         arguments:
             file_path (str): A string representing a path to a file, with extension
@@ -74,11 +79,11 @@ class FileParser:
         file_dir, file_name = path.split(file_path)
         name, ext = path.splitext(file_name)
         ext = ext.lower()
-        if not ext or ext not in FileParser.valid_extensions:
+        if not ext or ext not in cls.valid_extensions:
             raise ValueError("Invalid file type")
         if ext == ".gdi":
             return "disc.gdi"
-        result = FileParser.filename_regex.match(name)
+        result = cls.filename_regex.match(name)
         if not result:
             raise SyntaxError("Filename does not contain track information")
         track_num = str(int(result.group(1)))  # removes leading zeros

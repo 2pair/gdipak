@@ -5,7 +5,7 @@ test:
 
 .PHONY: lint
 lint:
-	black .
+	black gdipak tests
 	flake8
-	pylint gdipak/*.py
-	bandit -b -bandit_baseline -r *.py .
+	bandit -b ".bandit_baseline" -r *.py gdipak
+	pylint gdipak/*.py tests/*.py

@@ -1,52 +1,53 @@
 """Constructs argument parsing class and validates arguments"""
-import argparse
 import sys
 import os
 import enum
 
+from argparse import ArgumentParser
+
 
 @enum.unique
 class RecursiveMode(enum.Enum):
+    """Enum for the output format when working on a directory recursively"""
+
     PRESERVE_STRUCTURE = 0
-    FLAT_STRUCTURE = 1
-
-    @staticmethod
-    def make(num):
-        if num == 0:
-            return RecursiveMode.PRESERVE_STRUCTURE
-        elif num == 1:
-            return RecursiveMode.FLAT_STRUCTURE
-        raise ValueError("invalid value for enum mapping")
+    FLATTEN_STRUCTURE = 1
 
 
+# pylint disable=too-few-public-methods
 class ArgParser:
-    def __init__(self, version):
-        """version: The program version, to be used in cmdline help"""
+    """Processes CLI arguments"""
+
+    def __init__(self, version: str) -> None:
+        """Setup argument parser.
+
+        Args:
+          version: The program version, to be used in command line help
+        """
         self.version = version
 
-    def run(self, args):
+    def __call__(self, args: list) -> dict:
         """setups up the argument parsing and returns the validated arguments
-        arguments:
-            None
-        returns:
+
+        Args:
+            args: The arguments from the command line, as represented by sys.argv.
+
+        Returns:
             dict: the dictionary of validated arguments
-        raises:
-            None
         """
-        parser = self.__setup_argparser()
+        parser = self.__setup()
         args = vars(parser.parse_args(args))
         args = self.__validate_args(args)
         return args
 
-    def __validate_args(self, args):
-        """Validates and sanitizes the supplied arguments.
-        Exits on failure.
-        arguments:
-            args (dict):  A dictionary of args from argparse
-        returns:
+    def __validate_args(self, args: dict) -> dict:
+        """Validates and sanitizes the supplied arguments. Exits on failure.
+
+        Args:
+            args:  A dictionary of args from argparse
+
+        Returns:
             dict: A dictionary of the args modified to enforce rules
-        raises:
-            None
         """
         fail_msg = "Input directory is not a directory"
         # mandatory argument
@@ -72,24 +73,24 @@ class ArgParser:
         elif args["recursive"] is not None:
             fail_msg = 'valid values for "recursive" are blank, 0, and 1.'
             r_mode = args["recursive"]
-            if r_mode != 1 and r_mode != 0:
+            if r_mode not in (0, 1):
                 print(fail_msg)
                 sys.exit(0)
-            args["recursive"] = RecursiveMode.make(r_mode)
+            args["recursive"] = RecursiveMode(r_mode)
 
         return args
 
-    def __setup_argparser(self):
+    def __setup(self) -> ArgumentParser:
         """Creates the argument parser
-        arguments:
+
+        Args:
             None
-        returns:
+
+        Returns:
             argparse.ArgumentParser
-        raises:
-            None
         """
 
-        parser = argparse.ArgumentParser(
+        parser = ArgumentParser(
             description="""Scans a directory and optionally subdirectories for *.gdi
             files and the related *.bin files. creates new file names that conform
             to the expected format for the GDEMU"""
@@ -99,7 +100,7 @@ class ArgParser:
         )
 
         parser.add_argument(
-            "-d",
+            "-i",
             "--indirectory",
             action="store",
             dest="in_dir",
