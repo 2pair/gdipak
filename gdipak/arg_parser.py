@@ -10,7 +10,13 @@ from argparse import ArgumentParser
 class RecursiveMode(enum.Enum):
     """Enum for the output format when working on a directory recursively"""
 
+    # The output directories will mirror the input directories. ex:
+    # ./in/good_games/game_a -> ./out/good_games/game_a
+    # ./in/bad_games/game_b -> ./out/bad_games/game_b
     PRESERVE_STRUCTURE = 0
+    # The output directories will all be moved into the out directory. ex:
+    # ./in/good_games/game_a -> ./out/game_a
+    # ./in/bad_games/game_b -> ./out/game_b
     FLATTEN_STRUCTURE = 1
 
 

@@ -67,18 +67,24 @@ def check_filename(file: str, dirname: str) -> str:
         assert False
 
 
-def check_files(directory: str, expected_exts: List[str]) -> None:
+def check_files(
+    directory: str, expected_exts: List[str], whitelist: List[str] = None
+) -> None:
     """validates the filenames in a dir
 
     Args:
         directory: The path to a game's directory.
         expected_exts: The non-exclusive list of extensions to check.
+        whitelist: Files that should not be checked.
     """
+    whitelist = [] if whitelist is None else whitelist
     exts = dict.fromkeys(expected_exts, 0)
     dirname = path.basename(directory)
     with scandir(directory) as itr:
         for item in itr:
             if path.isfile(item):
+                if item.name in whitelist:
+                    continue
                 ext = check_filename(item.name, dirname)
                 if ext in exts:
                     exts[ext] += 1

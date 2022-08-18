@@ -72,23 +72,53 @@ class TestGetFilesInDir:
 class TestGetSubdirsInDir:
     """Test getting the sub directories in a directory."""
 
-    def test_dirs_dont_exist(self, tmpdir):
-        """Test when there are no sub directories."""
+    def test_no_dirs(self, tmpdir):
+        """Test when there are no directories."""
         tmpdir.mkdir("basedir")
         dir_path = tmpdir.listdir()[0]
         dirs = gdipak.get_subdirs_in_dir(dir_path)
         assert len(dirs) == 0
 
-    def test_dirs_exist(self, tmpdir):
-        """Test when there are sub directories."""
+    def test_dirs(self, tmpdir):
+        """Test when there are directories."""
         base = tmpdir.mkdir("basedir")
-        sub1 = base.mkdir("subdir1")
-        sub2 = base.mkdir("subdir2")
+        sub1 = base.mkdir("subdir0")
+        sub2 = base.mkdir("subdir1")
         dir_path = tmpdir.listdir()[0]
         dirs = gdipak.get_subdirs_in_dir(dir_path)
         assert len(dirs) == 2
         assert sub1 in dirs
         assert sub2 in dirs
+
+    def test_sub_dirs_recursive(self, tmpdir):
+        """Test when there are sub directories."""
+        base = tmpdir.mkdir("basedir")
+        sub_dirs = []
+        sub_dirs.append(base.mkdir("subdir0"))
+        sub_dirs.append(base.mkdir("subdir1"))
+        sub_dirs.append(sub_dirs[0].mkdir("subdir2"))
+        sub_dirs.append(sub_dirs[0].mkdir("subdir3"))
+        sub_dirs.append(sub_dirs[2].mkdir("subdir4"))
+        sub_dirs.append(sub_dirs[2].mkdir("subdir5"))
+        dir_path = tmpdir.listdir()[0]
+        dirs = gdipak.get_subdirs_in_dir(dir_path)
+        assert len(dirs) == 6
+        assert sorted(dirs) == sorted(sub_dirs)
+
+    def test_sub_dirs_recursive_with_max_recurion(self, tmpdir):
+        """Test when there are sub directories and a recursion limit."""
+        base = tmpdir.mkdir("basedir")
+        sub_dirs = []
+        sub_dirs.append(base.mkdir("subdir0"))
+        sub_dirs.append(base.mkdir("subdir1"))
+        sub_dirs.append(sub_dirs[0].mkdir("subdir2"))
+        sub_dirs.append(sub_dirs[0].mkdir("subdir3"))
+        sub_dirs.append(sub_dirs[2].mkdir("subdir4"))
+        sub_dirs.append(sub_dirs[2].mkdir("subdir5"))
+        dir_path = tmpdir.listdir()[0]
+        dirs = gdipak.get_subdirs_in_dir(dir_path, 1)
+        assert len(dirs) == 4
+        assert sorted(dirs) == sorted(sub_dirs[:4])
 
 
 class TestWriteFile:
@@ -101,11 +131,11 @@ class TestWriteFile:
         contents = b"This is the contents of the file"
         in_file.write(contents)
 
-        out_filename = path.join(io_dir, "disc.gdi")
-        gdipak.write_file(in_file.realpath(), out_filename)
-        # original file no longer exists
-        assert not in_file.check()
-        with open(out_filename, "br") as out_file:
+        out_filepath = path.join(io_dir, "disc.gdi")
+        gdipak.write_file(in_file.realpath(), out_filepath)
+        # original file still exists
+        assert in_file.check()
+        with open(out_filepath, "br") as out_file:
             assert contents == out_file.read()
 
     def test_different_file(self, tmpdir):
@@ -174,30 +204,30 @@ class TestPackGdi:
 
     def test_single_dir_same_out_dir(self, tmpdir):
         """Test in a single directory, dont create the namefile."""
-        dir_path, _1, exts = make_files(tmpdir, "mygame")
+        dir_path, in_filenames, exts = make_files(tmpdir, "mygame")
         gdipak.pack_gdi(dir_path, dir_path, False, False)
 
         # dir name didn't change
         assert tmpdir.listdir()[0] == dir_path
-        check_files(dir_path, exts)
+        check_files(dir_path, exts, in_filenames)
 
     def test_single_dir_same_out_dir_gen_namefile(self, tmpdir):
         """Test in a single directory, create the namefile."""
-        dir_path, _1, exts = make_files(tmpdir, "mygame")
+        dir_path, in_filenames, exts = make_files(tmpdir, "mygame")
         gdipak.pack_gdi(dir_path, dir_path, False, True)
 
         # dir name didn't change
         assert tmpdir.listdir()[0] == dir_path
-        check_files(dir_path, exts)
+        check_files(dir_path, exts, in_filenames)
 
     def test_single_dir_same_out_dir_default_args(self, tmpdir):
         """Test in a single directory with default arguments."""
-        dir_path, _1, exts = make_files(tmpdir, "mygame")
+        dir_path, in_filenames, exts = make_files(tmpdir, "mygame")
         gdipak.pack_gdi(dir_path, dir_path)
 
         # dir name didn't change
         assert tmpdir.listdir()[0] == dir_path
-        check_files(dir_path, exts)
+        check_files(dir_path, exts, in_filenames)
 
     def test_single_dir_different_out_dir(self, tmpdir):
         """Test creating the output in a separate directory."""
@@ -222,39 +252,39 @@ class TestPackGdi:
 
     def test_recursive_dir_same_out_dir_mode_none(self, tmpdir):
         """Test multiple sets of files in a single directory."""
-        dir_path, _1, exts = make_files(tmpdir, "mygame")
-        make_files(dir_path, "some other game")
+        dir_path, mg_in_filenames, exts = make_files(tmpdir, "mygame")
+        _0, sog_in_fielnames, _2 = make_files(dir_path, "some other game")
         gdipak.pack_gdi(dir_path, dir_path, None, False)
-        check_files(dir_path, exts)
+        check_files(dir_path, exts, mg_in_filenames)
         with scandir(dir_path) as itr:
             for item in itr:
                 if path.isdir(item):
                     # subdir was not touched
                     with pytest.raises(AssertionError):
-                        check_files(item, exts)
+                        check_files(item, exts, sog_in_fielnames)
 
     def test_recursive_dir_same_out_dir_mode_zero(self, tmpdir):
         """Test multiple sets of files in a single directory."""
-        dir_path, _1, exts = make_files(tmpdir, "mygame")
-        make_files(dir_path, "some other game")
+        dir_path, mg_in_filenames, exts = make_files(tmpdir, "mygame")
+        _0, sog_in_fielnames, _2 = make_files(dir_path, "some other game")
         gdipak.pack_gdi(dir_path, dir_path, RecursiveMode.PRESERVE_STRUCTURE, False)
-        check_files(dir_path, exts)
+        check_files(dir_path, exts, mg_in_filenames)
         with scandir(dir_path) as itr:
             for item in itr:
                 if path.isdir(item):
-                    check_files(item, exts)
+                    check_files(item, exts, sog_in_fielnames)
 
     def test_recursive_dir_same_out_dir_mode_one(self, tmpdir):
         """Test multiple sets of files in a single directory."""
-        dir_path, _1, exts = make_files(tmpdir, "mygame")
-        make_files(dir_path, "some other game")
+        dir_path, mg_in_filenames, exts = make_files(tmpdir, "mygame")
+        _0, sog_in_fielnames, _2 = make_files(dir_path, "some other game")
         # mode is changed implicitly due to in_dir == out_dir
         gdipak.pack_gdi(dir_path, dir_path, RecursiveMode.FLATTEN_STRUCTURE, False)
-        check_files(dir_path, exts)
+        check_files(dir_path, exts, mg_in_filenames)
         with scandir(dir_path) as itr:
             for item in itr:
                 if path.isdir(item):
-                    check_files(item, exts)
+                    check_files(item, exts, sog_in_fielnames)
 
     def test_recursive_dir_different_out_dir_mode_one(self, tmpdir):
         """Test multiple sets of files in a recursive directory structure and a

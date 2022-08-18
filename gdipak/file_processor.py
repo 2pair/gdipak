@@ -24,7 +24,8 @@ class FileProcessor:
 
     @classmethod
     def get_output_file_contents(cls, file_path: str) -> str:
-        """Based on the input filetype performs the required type of parsing.
+        """Return the path to a file that contains the output file's contents.
+        Based on the input filetype this may just be the input file or a tmp file.
 
         Args:
             file_path (str): A string representing the path to a file, with extension
