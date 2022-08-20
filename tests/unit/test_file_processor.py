@@ -6,43 +6,45 @@ import pytest
 from gdipak.file_processor import FileProcessor
 
 
-class TestConvertFilename:
-    """Tests filename conversion"""
+class TestConvertFileName:
+    """Tests file name conversion"""
 
     def test_convert_gdi(self):
-        """Tests converting a gdi filename."""
-        result = FileProcessor.convert_filename("Very Good Game ~PAL~.gdi")
+        """Tests converting a gdi file name."""
+        result = FileProcessor.convert_file_name("Very Good Game ~PAL~.gdi")
         assert result == "disc.gdi"
 
     def test_convert_track_names(self):
         """Tests converting track names."""
-        result = FileProcessor.convert_filename("Very Good Game (Track 1) PAL.raw")
+        result = FileProcessor.convert_file_name("Very Good Game (Track 1) PAL.raw")
         assert result == "track01.raw"
 
-        result = FileProcessor.convert_filename(
+        result = FileProcessor.convert_file_name(
             "track racing game 2-track5-(region and language information).bin"
         )
         assert result == "track05.bin"
 
-        result = FileProcessor.convert_filename(
+        result = FileProcessor.convert_file_name(
             "It's Incredible! - Worldwide?! (Europe) (En,Fr,De,Es) (Track0008).bin"
         )
         assert result == "track08.bin"
 
-        result = FileProcessor.convert_filename("_THE_GAME_TRACK_4_.bin")
+        result = FileProcessor.convert_file_name("_THE_GAME_TRACK_4_.bin")
         assert result == "track04.bin"
 
-        result = FileProcessor.convert_filename("Sometimes.People.Do.This.Track.12.raw")
+        result = FileProcessor.convert_file_name(
+            "Sometimes.People.Do.This.Track.12.raw"
+        )
         assert result == "track12.raw"
 
     def test_convert_track_names_with_dirs(self, tmpdir):
         """Tests converting paths to tracks."""
-        result = FileProcessor.convert_filename(
+        result = FileProcessor.convert_file_name(
             path.join(tmpdir, "Very Good Game (Track 1) PAL.raw")
         )
         assert result == path.join(tmpdir, "track01.raw")
 
-        result = FileProcessor.convert_filename(
+        result = FileProcessor.convert_file_name(
             path.join(
                 tmpdir,
                 "track racing game 2-track5-(region and language information).bin",
@@ -50,7 +52,7 @@ class TestConvertFilename:
         )
         assert result == path.join(tmpdir, "track05.bin")
 
-        result = FileProcessor.convert_filename(
+        result = FileProcessor.convert_file_name(
             path.join(
                 tmpdir,
                 "It's Incredible! - Worldwide?! (Europe) (En,Fr,De,Es) (Track0008).bin",
@@ -58,12 +60,12 @@ class TestConvertFilename:
         )
         assert result == path.join(tmpdir, "track08.bin")
 
-        result = FileProcessor.convert_filename(
+        result = FileProcessor.convert_file_name(
             path.join(tmpdir, "_THE_GAME_TRACK_4_.bin")
         )
         assert result == path.join(tmpdir, "track04.bin")
 
-        result = FileProcessor.convert_filename(
+        result = FileProcessor.convert_file_name(
             path.join(tmpdir, "Sometimes.People.Do.This.Track.12.raw")
         )
         assert result == path.join(tmpdir, "track12.raw")
@@ -71,15 +73,15 @@ class TestConvertFilename:
     def test_bad_file_type(self):
         """Tests fails when given an invalid file type."""
         with pytest.raises(ValueError):
-            FileProcessor.convert_filename("Very Good Game.cdi")
+            FileProcessor.convert_file_name("Very Good Game.cdi")
 
     def test_ambiguous_file_name(self):
         """Test fails when given a track of unknown number."""
         with pytest.raises(SyntaxError):
-            FileProcessor.convert_filename("Very Good Game.bin")
+            FileProcessor.convert_file_name("Very Good Game.bin")
 
         with pytest.raises(SyntaxError):
-            FileProcessor.convert_filename("Track_Attack.bin")
+            FileProcessor.convert_file_name("Track_Attack.bin")
 
 
 class TestGetOutputFileContents:
@@ -115,13 +117,3 @@ class TestGetOutputFileContents:
         file_name = path.join(tmpdir, "War and Peace.rtf")
         with pytest.raises(ValueError):
             FileProcessor.get_output_file_contents(file_name)
-
-
-# TODO
-@pytest.mark.skip(reason="Haven't written tests yet")
-class TestProcessGdi:
-    """Whats it going to be?"""
-
-    def test_a_test(self):
-        """Good test."""
-        assert False

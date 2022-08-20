@@ -12,7 +12,7 @@ class FileProcessor:
     valid_extensions = (".gdi", ".bin", ".raw")
     # This regex takes any string of characters that contains "track" and a
     # number and captures the track number
-    filename_regex = re.compile(
+    file_name_regex = re.compile(
         r"^[\s\S]*track[\s\S]*?([\d]+)",
         re.IGNORECASE,
     )
@@ -28,7 +28,7 @@ class FileProcessor:
         Based on the input filetype this may just be the input file or a tmp file.
 
         Args:
-            file_path (str): A string representing the path to a file, with extension
+            file_path (str): A string representing the path to a file, with extension.
 
         Returns:
             str: The location on disk where the file's contents are stored. This may be
@@ -47,14 +47,14 @@ class FileProcessor:
     @classmethod
     def process_gdi(cls, gdi_file: str) -> str:
         """processes the contents of the gdi file to sanitize track names and remove
-        white space to comply with SD card maker expectations
+        white space to comply with SD card maker expectations.
 
         Args:
-            gdi_file (str): A string representing the path to a gdi filename, with
-                            extension
+            gdi_file (str): A string representing the path to a gdi file name, with
+                extension.
         Returns:
             str: A string representing the path to the processed file contents. This
-                 is a temporary file. The original file is not modified.
+                is a temporary file. The original file is not modified.
         Raises:
             ValueError, SyntaxError
         """
@@ -68,24 +68,25 @@ class FileProcessor:
                 return tmp_path
 
     @classmethod
-    def convert_filename(cls, file_path: str) -> str:
-        """Based on the input filename, generates an output filename
+    def convert_file_name(cls, file: str) -> str:
+        """Based on the input file name, generates an output file name.
         arguments:
-            file_path (str): A string representing a path to a file, with extension
+            file (str): A string representing EITHER a path to a file, with extension
+                or the filename, with extension.
         returns:
-            str: A string that GDEMU expects for that file's name
+            str: A string that GDEMU expects for that file's name.
         raises:
             ValueError, SyntaxError
         """
-        file_dir, file_name = path.split(file_path)
+        file_dir, file_name = path.split(file)
         name, ext = path.splitext(file_name)
         ext = ext.lower()
         if not ext or ext not in cls.valid_extensions:
             raise ValueError("Invalid file type")
         if ext == ".gdi":
             return "disc.gdi"
-        result = cls.filename_regex.match(name)
+        result = cls.file_name_regex.match(name)
         if not result:
-            raise SyntaxError("Filename does not contain track information")
+            raise SyntaxError("File name does not contain track information")
         track_num = str(int(result.group(1)))  # removes leading zeros
         return path.join(file_dir, "track" + track_num.zfill(2) + ext)

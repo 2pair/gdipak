@@ -166,7 +166,7 @@ class TestValidateArgs:
             self.arg_parser._ArgParser__validate_args(args)
 
     def test_file_as_in_dir(self, tmpdir):
-        """Test that a filename is not valid."""
+        """Test that a file name is not valid."""
         file = tmpdir.join("a file")
         file.write("")
         args = self.base_args
@@ -203,7 +203,7 @@ class TestValidateArgs:
             self.arg_parser._ArgParser__validate_args(args)
 
     def test_file_as_out_dir(self, tmpdir):
-        """Test that a filename is not valid."""
+        """Test that a file name is not valid."""
         file = tmpdir.join("a file")
         file.write("")
         args = self.base_args

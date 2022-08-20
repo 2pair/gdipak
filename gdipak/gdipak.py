@@ -49,17 +49,17 @@ def pack_gdi(  # noqa: C901
         write_name_file(os.path.join(out_dir, last_dir), gdi_file)
 
     for in_file in files:
-        out_filepath = FileProcessor.convert_filename(in_file)
-        out_filename = os.path.basename(out_filepath)
+        out_file_path = FileProcessor.convert_file_name(in_file)
+        out_file_name = os.path.basename(out_file_path)
         out_file_contents = FileProcessor.get_output_file_contents(in_file)
 
         out_file = out_dir
         if in_dir != out_dir:
             out_file = os.path.join(out_file, last_dir)
-        out_file = os.path.join(out_file, out_filename)
+        out_file = os.path.join(out_file, out_file_name)
 
         if modify_files:
-            os.rename(in_file, out_filepath)
+            os.rename(in_file, out_file_path)
 
         write_file(out_file_contents, out_file)
 
@@ -96,10 +96,10 @@ def write_name_file(out_dir: str, gdi_file: str) -> None:
     if not os.path.exists(out_dir):
         os.makedirs(os.path.realpath(out_dir))
 
-    gdi_filename = os.path.basename(gdi_file)
-    filename = os.path.splitext(gdi_filename)[0]
-    txt_filename = filename + ".txt"
-    out_file = os.path.join(out_dir, txt_filename)
+    gdi_file_name = os.path.basename(gdi_file)
+    file_name = os.path.splitext(gdi_file_name)[0]
+    txt_file_name = file_name + ".txt"
+    out_file = os.path.join(out_dir, txt_file_name)
     with open(out_file, "w", encoding="UTF-8") as f_out:
         f_out.write("")
 

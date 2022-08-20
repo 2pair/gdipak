@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 
 @enum.unique
 class RecursiveMode(enum.Enum):
-    """Enum for the output format when working on a directory recursively"""
+    """Enum for the output format when working on a directory recursively."""
 
     # The output directories will mirror the input directories. ex:
     # ./in/good_games/game_a -> ./out/good_games/game_a
@@ -22,18 +22,18 @@ class RecursiveMode(enum.Enum):
 
 # pylint disable=too-few-public-methods
 class ArgParser:
-    """Processes CLI arguments"""
+    """Processes CLI arguments."""
 
     def __init__(self, version: str) -> None:
         """Setup argument parser.
 
         Args:
-          version: The program version, to be used in command line help
+          version: The program version, to be used in command line help.
         """
         self.version = version
 
     def __call__(self, args: list) -> dict:
-        """setups up the argument parsing and returns the validated arguments
+        """Setups up the argument parsing and returns the validated arguments.
 
         Args:
             args: The arguments from the command line, as represented by sys.argv.
@@ -50,10 +50,10 @@ class ArgParser:
         """Validates and sanitizes the supplied arguments. Exits on failure.
 
         Args:
-            args:  A dictionary of args from argparse
+            args:  A dictionary of args from argparse.
 
         Returns:
-            dict: A dictionary of the args modified to enforce rules
+            dict: A dictionary of the args modified to enforce rules.
         """
         fail_msg = "Input directory is not a directory"
         # mandatory argument
@@ -87,7 +87,7 @@ class ArgParser:
         return args
 
     def __setup(self) -> ArgumentParser:
-        """Creates the argument parser
+        """Creates the argument parser.
 
         Args:
             None
