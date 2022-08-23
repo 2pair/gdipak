@@ -1,9 +1,136 @@
 """Functions used across various unit tests."""
 
+from collections import namedtuple
 from os import path, scandir
 import random
 import re
 from typing import List, Tuple
+
+
+# pylint: disable=too-few-public-methods
+class GdiGenerator:
+    """Creates the contents of a GDI file as it is before being converted."""
+
+    split_on_nums_regex = re.compile(r"(\d+)")
+
+    # pylint: disable=too-many-arguments
+    def __init__(
+        self,
+        game_name: str,
+        track_offsets: List[int] = None,
+        track_exts: List[str] = None,
+        game_num: int = None,
+        line_end: str = None,
+    ) -> None:
+        """Args:
+        game_name: This is where the fun begins.
+        track_offsets: Optional. A list of track byte offsets. If left as None track
+         count and track offsets will be random.
+        track_exts: Optional. A list of extensions to use for the tracks. The
+          extensions should be provided without the dot separator. The length
+          should be equal to the length of the track_offsets list.
+        game_num: Optional. The special number assigned to this game. If left None
+          game num will be random.
+        line_end: Optional.What to use as the line ending. Should be one of \n or
+          \r\n. If left None line ending will be random.
+        """
+        self.game_name = game_name
+        self.track_offsets = track_offsets
+        self.track_exts = track_exts
+        self.game_num = game_num
+        self.line_end = line_end
+
+    def __call__(self) -> str:
+        """Generate a new GDI file.
+        If some parameters are not set, random ones will be generated.
+
+        Returns:
+            The GDI file's contents.
+        """
+        track_offsets = self.track_offsets
+        if not track_offsets:
+            track_offsets = []
+            byte_offset = 0
+            num_tracks = random.randint(2, 20)
+            for _ in range(num_tracks):
+                track_offsets.append(byte_offset)
+                byte_offset = self._byte_offset_generator(byte_offset)
+        track_exts = self.track_exts
+        if not track_exts:
+            track_exts = []
+            for _ in range(num_tracks):
+                track_exts.append(random.choices(["raw", "bin"], [1, 3], k=1)[0])
+        game_num = self.game_num if self.game_num else random.randint(1000, 9999)
+        line_end = self.line_end
+        if not line_end:
+            line_end = "\n" if random.choice([0, 1]) else "\r\n"
+
+        return self._make_gdi_contents(
+            self.game_name, track_offsets, track_exts, game_num, line_end
+        )
+
+    @staticmethod
+    def _byte_offset_generator(byte_offset):
+        """Makes a number that is bigger than the previous number."""
+        return (byte_offset << 1) + random.randint(0, 2**8)
+
+    # pylint: disable=too-many-arguments, too-many-locals
+    @classmethod
+    def _make_gdi_contents(
+        cls,
+        game_name: str,
+        track_offsets: List[int],
+        track_exts: List[str],
+        game_num: int,
+        line_end: str,
+    ) -> str:
+        """Creates the contents of a GDI file as it is before being converted.
+
+        Args:
+            game_name: This is where the fun begins.
+            track_sizes: A list of track sizes.
+            track_exts: A list of extensions to use for each track.
+            game_num: The special number assigned to this game.
+            line_end: What to use as the line ending.
+
+        Returns:
+            The GDI file's contents.
+        """
+        track_count = len(track_offsets)
+        base_lines = [str(track_count) + line_end]
+        for track_index, track_offset in enumerate(track_offsets):
+            index = track_index + 1
+            leading_spaces = " " * (len(str(track_count)) - len(str(index)))
+            four_oh = 4 * (index % 2)
+
+            base_lines.append(
+                f"{leading_spaces}{index} {track_offset} {four_oh} {game_num} "
+                f'"{game_name}.{track_exts[track_index]}" 0{line_end}'
+            )
+
+        contents = ""
+        for index, line in enumerate(base_lines):
+            # First line is a special case
+            if index == 0:
+                contents += line
+                continue
+            LineParts = namedtuple(
+                "LineParts",
+                ["leading_spaces", "track_num", "space", "byte_index", "remainder"],
+            )
+            line_parts = LineParts(*cls.split_on_nums_regex.split(line, maxsplit=2))
+            digits = sum(char.isdigit() for char in line_parts.byte_index)
+            justify_spaces = " " * (len(str(track_offsets[-1])) - digits)
+            line = (
+                line_parts.leading_spaces
+                + line_parts.track_num
+                + line_parts.space
+                + justify_spaces
+                + line_parts.byte_index
+                + line_parts.remainder
+            )
+            contents += line
+        return contents
 
 
 def make_files(tmpdir: str, game_name: str) -> Tuple[str, List[str], List[str]]:
@@ -35,50 +162,6 @@ def make_files(tmpdir: str, game_name: str) -> Tuple[str, List[str], List[str]]:
             file_extensions.append(ext)
 
     return game_dir, file_names, file_extensions
-
-
-# pylint: disable=too-many-locals
-def make_gdi_contents(game_name: str) -> str:
-    """Creates the contents of a GDI file as it is before being converted.
-
-    Args:
-      game_name: This is where the fun begins.
-
-    Returns:
-        The GDI file's contents.
-    """
-    tracks = random.randint(2, 20)
-    line_end = "\n" if random.choice([0, 1]) else "\r\n"
-    game_num = random.randint(1000, 9999)
-
-    byte_index = 0
-    lines = [str(tracks) + line_end]
-    for track in range(1, tracks + 1):
-        leading_spaces = " " * (len(str(tracks)) - len(str(track)))
-        four_oh = 4 * (track % 2)
-        ext = random.choices([".raw", ".bin"], [1, 3], k=1)[0]
-
-        lines.append(
-            f"{leading_spaces}{track} {byte_index} {four_oh} {game_num} "
-            f'"{game_name}{ext}" 0{line_end}'
-        )
-        if track != tracks:
-            byte_index = (byte_index << 1) + random.randint(0, 2**8)
-
-    num_splitter_regex = re.compile(r"(\d+)")
-    contents = ""
-    for line in lines:
-        # parts = [leading_spaces, track, space, byte_index, the_rest]
-        parts = num_splitter_regex.split(line, maxsplit=2)
-        # First line is a special case
-        if parts[2] == line_end:
-            contents += line
-            continue
-        digits = sum(char.isdigit() for char in parts[3])
-        justify_spaces = " " * (len(str(byte_index)) - digits)
-        line = parts[0] + parts[1] + parts[2] + justify_spaces + parts[3] + parts[4]
-        contents += line
-    return contents
 
 
 def check_file_name(file: str, dirname: str) -> str:
