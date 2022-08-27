@@ -8,13 +8,19 @@ from gdipak.file_processor import FileProcessor
 class GdiConverter:
     """Converts the GDI file into the format SD Card Maker wants."""
 
-    remove_repeated_spaces_regex = re.compile(r" +", " ")
+    repeated_spaces_regex = re.compile(r" +")
 
-    def __init__(self, file_path: str) -> None:
-        """
+    def __init__(self, file_path: str = None, file_contents: str = None) -> None:
+        """Accepts either file_path or file_contents, not both.
         Args:
             file_path: The path to file.
+            file_contents: The contents of the file.
         """
+        if not file_path and not file_contents:
+            raise ValueError("Either file_path or file_contents must be defined.")
+        if file_path and file_contents:
+            raise ValueError("Only one of file_path or file_contents can be defined.")
+        self.file_contents = file_contents
         self.file_path = path.realpath(file_path)
         self.backup_file_path = file_path + ".bak"
         self.backup_exists = False
@@ -25,8 +31,10 @@ class GdiConverter:
         This method also creates a backup of the file then deletes it when the
         conversion is finished so that users don't meet with a terrible fate.
         """
+        if not self.file_path:
+            raise ValueError("Cannot convert file, file_path is None")
         with open(self.file_path, "r+", encoding="UTF-8") as file:
-            contents = file.readlines()
+            contents = file.read()
             self._backup_file(contents)
             contents = self.convert_file_contents(contents)
             file.seek(0)
@@ -34,16 +42,23 @@ class GdiConverter:
             file.writelines(contents)
             self._delete_backup()
 
-    @classmethod
-    def convert_file_contents(cls, file_contents: str) -> str:
+    def convert_file_contents(self, file_contents: str = None) -> str:
         """Converts the file contents.
 
         Args:
             file_contents: A string containing all of the contents of the file. These
-            files are short, so reading in the whole thing isn't a big deal.
+                files are short, so reading in the whole thing isn't a big deal. If set
+                to None, use the file_contents passed on during instantiation.
         """
-        file_contents = cls._replace_file_names(file_contents)
-        file_contents = cls._remove_extra_whitespace(file_contents)
+        if not file_contents:
+            file_contents = self.file_contents
+        if not file_contents:
+            raise ValueError(
+                "file_contents should be a string representing the "
+                "contents of a GDI file"
+            )
+        file_contents = self._replace_file_names(file_contents)
+        file_contents = self._remove_extra_whitespace(file_contents)
         return file_contents
 
     def _backup_file(self, contents: str) -> None:
@@ -78,7 +93,7 @@ class GdiConverter:
         Returns:
             str: The modified contents of the GDI file.
         """
-        file_contents = cls.remove_repeated_spaces_regex.sub(re.escape(file_contents))
+        file_contents = cls.repeated_spaces_regex.sub(" ", re.escape(file_contents))
         if file_contents[0] == " ":
             file_contents = file_contents[1:]
         return file_contents

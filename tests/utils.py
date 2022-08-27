@@ -4,7 +4,7 @@ from collections import namedtuple
 from os import path, scandir
 import random
 import re
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 
 # pylint: disable=too-few-public-methods
@@ -40,12 +40,12 @@ class GdiGenerator:
         self.game_num = game_num
         self.line_end = line_end
 
-    def __call__(self) -> str:
+    def __call__(self) -> Tuple[str, Dict]:
         """Generate a new GDI file.
         If some parameters are not set, random ones will be generated.
 
         Returns:
-            The GDI file's contents.
+            The GDI file's contents and a metadata dict.
         """
         track_offsets = self.track_offsets
         if not track_offsets:
@@ -65,8 +65,17 @@ class GdiGenerator:
         if not line_end:
             line_end = "\n" if random.choice([0, 1]) else "\r\n"
 
-        return self._make_gdi_contents(
-            self.game_name, track_offsets, track_exts, game_num, line_end
+        return (
+            self._make_gdi_contents(
+                self.game_name, track_offsets, track_exts, game_num, line_end
+            ),
+            {
+                "name": self.game_name,
+                "game_num": game_num,
+                "offsets": track_offsets,
+                "extensions": track_exts,
+                "line_end": line_end
+            }
         )
 
     @staticmethod
@@ -105,7 +114,7 @@ class GdiGenerator:
 
             base_lines.append(
                 f"{leading_spaces}{index} {track_offset} {four_oh} {game_num} "
-                f'"{game_name}.{track_exts[track_index]}" 0{line_end}'
+                f'"{game_name} (Track {index}).{track_exts[track_index]}" 0{line_end}'
             )
 
         contents = ""
