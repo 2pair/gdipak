@@ -12,43 +12,43 @@ from gdipak.arg_parser import RecursiveMode
 class TestGetFilesInDir:
     """Tests getting a list of all the files in the directory."""
 
-    def test_alphanumeric(self, tmpdir):
+    def test_alphanumeric(self, tmp_path):
         """Test a directory and file with only alphanumeric characters."""
         dir_name = "gamedir"
         file_name = "aBcD1234.gdi"
-        tmp_path = tmpdir.mkdir(dir_name).join(file_name)
-        tmp_path.write("")
-        dir_path = tmpdir.listdir()[0]
-        files = gdipak.get_files_in_dir(dir_path)
+        tmp_path = tmp_path / dir_name
+        tmp_path.mkdir()
+        (tmp_path / file_name).touch()
+        files = gdipak.get_files_in_dir(tmp_path)
         assert len(files) == 1
         out_file_dir, out_file_name = path.split(files[0])
         assert out_file_name == file_name
-        assert out_file_dir == path.realpath(dir_path)
+        assert out_file_dir == path.realpath(tmp_path)
 
-    def test_special_chars(self, tmpdir):
+    def test_special_chars(self, tmp_path):
         """Test a directory and file with special characters."""
         dir_name = "gamedir 2! (The Redirening)"
         file_name = "123 !@#$%^&()~S{}[]-=_+'`.bin"
-        tmp_path = tmpdir.mkdir(dir_name).join(file_name)
-        tmp_path.write("")
-        dir_path = tmpdir.listdir()[0]
-        files = gdipak.get_files_in_dir(dir_path)
+        tmp_path = tmp_path / dir_name
+        tmp_path.mkdir()
+        (tmp_path / file_name).touch()
+        files = gdipak.get_files_in_dir(tmp_path)
         assert len(files) == 1
         out_file_dir, out_file_name = path.split(files[0])
         assert out_file_name == file_name
-        assert out_file_dir == path.realpath(dir_path)
+        assert out_file_dir == path.realpath(tmp_path)
 
-    def test_unrelated_file(self, tmpdir):
+    def test_unrelated_file(self, tmp_path):
         """Test a directory containing unrelated files."""
         dir_name = "gamedirrrr"
         file_name = "Vacation Photo-1528.jpg"
-        tmp_path = tmpdir.mkdir(dir_name).join(file_name)
-        tmp_path.write("")
-        dir_path = tmpdir.listdir()[0]
-        files = gdipak.get_files_in_dir(dir_path)
+        tmp_path = tmp_path / dir_name
+        tmp_path.mkdir()
+        (tmp_path / file_name).touch()
+        files = gdipak.get_files_in_dir(tmp_path)
         assert len(files) == 0
 
-    def test_multi_files(self, tmpdir):
+    def test_multi_files(self, tmp_path):
         """Test a directory containing multiple files."""
         dir_name = "gamedir"
         file_names = (
@@ -58,12 +58,11 @@ class TestGetFilesInDir:
             "mygame(track3).raw",
             "mygame.txt",
         )
-        tmp_dir = tmpdir.mkdir(dir_name)
+        tmp_path = tmp_path / dir_name
+        tmp_path.mkdir()
         for file_name in file_names:
-            tmp_path = tmp_dir.join(file_name)
-            tmp_path.write("")
-        dir_path = tmpdir.listdir()[0]
-        files = gdipak.get_files_in_dir(dir_path)
+            (tmp_path / file_name).touch()
+        files = gdipak.get_files_in_dir(tmp_path)
         assert len(files) == (len(file_names) - 1)
         for file in files:
             assert file != file_names[len(file_names) - 1]
@@ -72,23 +71,23 @@ class TestGetFilesInDir:
 class TestGetSubdirsInDir:
     """Test getting the sub directories in a directory."""
 
-    def test_no_dirs(self, tmpdir):
+    def test_no_dirs(self, tmp_path):
         """Test when there are no directories."""
-        tmpdir.mkdir("basedir")
-        dir_path = tmpdir.listdir()[0]
-        dirs = gdipak.get_subdirs_in_dir(dir_path)
+        tmp_path = tmp_path / "basedir"
+        tmp_path.mkdir()
+        dirs = gdipak.get_subdirs_in_dir(tmp_path)
         assert len(dirs) == 0
 
-    def test_dirs(self, tmpdir):
+    def test_dirs(self, tmp_path):
         """Test when there are directories."""
-        base = tmpdir.mkdir("basedir")
-        sub1 = base.mkdir("subdir0")
-        sub2 = base.mkdir("subdir1")
-        dir_path = tmpdir.listdir()[0]
-        dirs = gdipak.get_subdirs_in_dir(dir_path)
+        sub1 = tmp_path / "basedir" / "subdir0"
+        sub1.mkdir(parents=True)
+        sub2 = tmp_path / "basedir" / "subdir1"
+        sub2.mkdir(parents=True)
+        dirs = gdipak.get_subdirs_in_dir(tmp_path / "basedir")
         assert len(dirs) == 2
-        assert sub1 in dirs
-        assert sub2 in dirs
+        assert str(sub1) in dirs
+        assert str(sub2) in dirs
 
     def test_sub_dirs_recursive(self, tmpdir):
         """Test when there are sub directories."""

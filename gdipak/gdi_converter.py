@@ -1,5 +1,6 @@
 """GDI File conversion class"""
 from os import path, remove
+from pathlib import Path
 import re
 
 from gdipak.file_processor import FileProcessor
@@ -10,7 +11,7 @@ class GdiConverter:
 
     repeated_spaces_regex = re.compile(r" +")
 
-    def __init__(self, file_path: str = None, file_contents: str = None) -> None:
+    def __init__(self, file_path: str | Path = None, file_contents: str = None) -> None:
         """Accepts either file_path or file_contents, not both.
         Args:
             file_path: The path to file.
@@ -21,8 +22,8 @@ class GdiConverter:
         if file_path and file_contents:
             raise ValueError("Only one of file_path or file_contents can be defined.")
         self.file_contents = file_contents
-        self.file_path = path.realpath(file_path)
-        self.backup_file_path = file_path + ".bak"
+        self.file_path = path.realpath(file_path) if file_path else None
+        self.backup_file_path = self.file_path + ".bak" if file_path else None
         self.backup_exists = False
 
     def convert_file(self) -> None:
@@ -69,6 +70,7 @@ class GdiConverter:
         """
         with open(self.backup_file_path, "w", encoding="UTF-8") as b_file:
             b_file.writelines(contents)
+        self.backup_exists = True
 
     def _delete_backup(self) -> None:
         """Removes the backup of the file from the disk."""
