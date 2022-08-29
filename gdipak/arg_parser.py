@@ -20,9 +20,10 @@ class RecursiveMode(enum.Enum):
     FLATTEN_STRUCTURE = 1
 
 
-# pylint disable=too-few-public-methods
 class ArgParser:
     """Processes CLI arguments."""
+
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, version: str) -> None:
         """Setup argument parser.

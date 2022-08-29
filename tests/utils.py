@@ -2,6 +2,7 @@
 
 from collections import namedtuple
 from os import path, scandir
+from pathlib import Path
 import random
 import re
 from typing import Dict, List, Tuple
@@ -74,8 +75,8 @@ class GdiGenerator:
                 "game_num": game_num,
                 "offsets": track_offsets,
                 "extensions": track_exts,
-                "line_end": line_end
-            }
+                "line_end": line_end,
+            },
         )
 
     @staticmethod
@@ -142,11 +143,12 @@ class GdiGenerator:
         return contents
 
 
-def make_files(tmpdir: str, game_name: str) -> Tuple[str, List[str], List[str]]:
+def make_files(tmp_path: Path, game_name: str) -> Tuple[str, List[str], List[str]]:
     """Creates a typical game directory.
 
     Args:
-        tmpdir: A directory where the game files' directory will be made.
+        tmp_path: A Path representing a directory where the game files' directory
+          will be made.
         game_name: What's this bad boy gonna be called?
 
     Returns:
@@ -161,11 +163,12 @@ def make_files(tmpdir: str, game_name: str) -> Tuple[str, List[str], List[str]]:
         game_name + "(track2).bin",
         game_name + "(track3).raw",
     )
-    game_dir = tmpdir.mkdir(game_name)
+    game_dir = tmp_path / game_name
+    game_dir.mkdir()
     file_extensions = []
     for file_name in file_names:
-        file_path = game_dir.join(file_name)
-        file_path.write("")
+        file_path = game_dir / file_name
+        file_path.touch()
         _1, ext = path.splitext(file_name)
         if ext not in file_extensions:
             file_extensions.append(ext)

@@ -10,6 +10,7 @@ class GdiConverter:
     """Converts the GDI file into the format SD Card Maker wants."""
 
     repeated_spaces_regex = re.compile(r" +")
+    repeated_tabs_regex = re.compile(r"\t+")
 
     def __init__(self, file_path: str | Path = None, file_contents: str = None) -> None:
         """Accepts either file_path or file_contents, not both.
@@ -82,7 +83,7 @@ class GdiConverter:
 
     @classmethod
     def _remove_extra_whitespace(cls, file_contents: str) -> str:
-        """Removes extra spaces from the file.
+        """Removes extra spaces and tabs from the file.
 
         ex:
         ' 2    600 0 2252 "MyGame (USA) (Track 2).bin" 0'
@@ -95,9 +96,15 @@ class GdiConverter:
         Returns:
             str: The modified contents of the GDI file.
         """
-        file_contents = cls.repeated_spaces_regex.sub(" ", re.escape(file_contents))
-        if file_contents[0] == " ":
-            file_contents = file_contents[1:]
+        file_contents = cls.repeated_tabs_regex.sub(
+            " ", file_contents.replace("\\", r"\\")
+        )
+        file_contents = cls.repeated_spaces_regex.sub(" ", file_contents)
+        lines = file_contents.splitlines(True)
+        for index, line in enumerate(lines):
+            if line[0] == " ":
+                lines[index] = line[1:]
+        file_contents = "".join(line for line in lines)
         return file_contents
 
     @classmethod
@@ -116,7 +123,7 @@ class GdiConverter:
             str: The modified contents of the GDI file.
         """
         output_contents = ""
-        lines = file_contents.splitlines()
+        lines = file_contents.splitlines(True)
         for index, line in enumerate(lines):
             start_quote_index = line.find('"')
             end_quote_index = line.rfind('"')
@@ -129,12 +136,10 @@ class GdiConverter:
                     f"Line {index + 1} only contains a single quote, file names "
                     "should be between two quotes."
                 )
-
+            start_quote_index += 1
             file_name = line[start_quote_index:end_quote_index]
-            new_file_name = FileProcessor.convert_file_name(re.escape(file_name))
-            line, replacements = re.subn(file_name, new_file_name, line)
-            if not replacements:
-                raise ValueError("The filename was not found!")
+            new_file_name = FileProcessor.convert_file_name(file_name)
+            line = re.sub(re.escape(file_name), new_file_name, line)
             output_contents += line
 
         return output_contents

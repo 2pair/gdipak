@@ -10,7 +10,7 @@ from gdipak.file_processor import FileProcessor
 
 
 # TODO: Reduce complexity
-def pack_gdi(  # noqa: C901
+def pack_gdi(  # pylint: disable=too-many-locals; # noqa: C901
     in_dir: str,
     out_dir: str,
     recursive: RecursiveMode = None,

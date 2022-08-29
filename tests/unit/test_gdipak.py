@@ -1,7 +1,7 @@
 """ Tests for gdipak"""
 
 from os import path, scandir
-from py import path as pypath
+from pathlib import Path
 import pytest
 
 from tests.utils import make_files, check_files
@@ -89,33 +89,41 @@ class TestGetSubdirsInDir:
         assert str(sub1) in dirs
         assert str(sub2) in dirs
 
-    def test_sub_dirs_recursive(self, tmpdir):
+    def test_sub_dirs_recursive(self, tmp_path):
         """Test when there are sub directories."""
-        base = tmpdir.mkdir("basedir")
+
+        def create_dirs_in_dir(base_dir, start_index):
+            for i in range(2):
+                sub_dir = base_dir / f"subdir{start_index + i}"
+                sub_dir.mkdir()
+                sub_dirs.append(str(sub_dir))
+
+        base = tmp_path / "basedir"
+        base.mkdir()
         sub_dirs = []
-        sub_dirs.append(base.mkdir("subdir0"))
-        sub_dirs.append(base.mkdir("subdir1"))
-        sub_dirs.append(sub_dirs[0].mkdir("subdir2"))
-        sub_dirs.append(sub_dirs[0].mkdir("subdir3"))
-        sub_dirs.append(sub_dirs[2].mkdir("subdir4"))
-        sub_dirs.append(sub_dirs[2].mkdir("subdir5"))
-        dir_path = tmpdir.listdir()[0]
-        dirs = gdipak.get_subdirs_in_dir(dir_path)
+        create_dirs_in_dir(base, 0)
+        create_dirs_in_dir(Path(sub_dirs[0]), 2)
+        create_dirs_in_dir(Path(sub_dirs[2]), 4)
+        dirs = gdipak.get_subdirs_in_dir(str(base))
         assert len(dirs) == 6
         assert sorted(dirs) == sorted(sub_dirs)
 
-    def test_sub_dirs_recursive_with_max_recurion(self, tmpdir):
+    def test_sub_dirs_recursive_with_max_recurion(self, tmp_path):
         """Test when there are sub directories and a recursion limit."""
-        base = tmpdir.mkdir("basedir")
+
+        def create_dirs_in_dir(base_dir, start_index):
+            for i in range(2):
+                sub_dir = base_dir / f"subdir{start_index + i}"
+                sub_dir.mkdir()
+                sub_dirs.append(str(sub_dir))
+
+        base = tmp_path / "basedir"
+        base.mkdir()
         sub_dirs = []
-        sub_dirs.append(base.mkdir("subdir0"))
-        sub_dirs.append(base.mkdir("subdir1"))
-        sub_dirs.append(sub_dirs[0].mkdir("subdir2"))
-        sub_dirs.append(sub_dirs[0].mkdir("subdir3"))
-        sub_dirs.append(sub_dirs[2].mkdir("subdir4"))
-        sub_dirs.append(sub_dirs[2].mkdir("subdir5"))
-        dir_path = tmpdir.listdir()[0]
-        dirs = gdipak.get_subdirs_in_dir(dir_path, 1)
+        create_dirs_in_dir(base, 0)
+        create_dirs_in_dir(Path(sub_dirs[0]), 2)
+        create_dirs_in_dir(Path(sub_dirs[2]), 4)
+        dirs = gdipak.get_subdirs_in_dir(str(base), 1)
         assert len(dirs) == 4
         assert sorted(dirs) == sorted(sub_dirs[:4])
 
@@ -324,20 +332,20 @@ class TestPackGdi:
         sooog_dir_path = path.join(soog_dir_path, path.basename(sooog_dir))
         check_files(sooog_dir_path, sooog_exts)
 
-    def test_missing_gdi_file(self, tmpdir):
+    def test_missing_gdi_file(self, tmp_path):
         """Tests a set of files that does not include the gdi file."""
         name = "mygame"
-        dir_path, _1, _2 = make_files(tmpdir, name)
-        gdi_path = pypath.local(path.join(dir_path, name + ".gdi"))
-        gdi_path.remove()
+        dir_path, _1, _2 = make_files(tmp_path, name)
+        gdi_path = Path(path.join(dir_path, name + ".gdi"))
+        gdi_path.unlink()
         with pytest.raises(ValueError):
             gdipak.pack_gdi(dir_path, dir_path)
 
-    def test_too_many_gdi_files(self, tmpdir):
+    def test_too_many_gdi_files(self, tmp_path):
         """Tests a set of files with more than one gdi file."""
         name = "mygame"
-        dir_path, _1, _2 = make_files(tmpdir, name)
-        impostor_file = dir_path.join("who put this file here.gdi")
-        impostor_file.write("")
+        dir_path, _1, _2 = make_files(tmp_path, name)
+        impostor_file = dir_path / "who put this file here.gdi"
+        impostor_file.touch()
         with pytest.raises(ValueError):
             gdipak.pack_gdi(dir_path, dir_path)

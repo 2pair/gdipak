@@ -1,3 +1,4 @@
+"""Tests for tests/utils.py."""
 import string
 
 from tests.utils import GdiGenerator
@@ -6,9 +7,9 @@ from tests.utils import GdiGenerator
 class TestGdiGenerator:
     """Tests the GDI generator, which is used to test other tests."""
 
-    # pytest disable=too-many-locals
     def test_fully_specified_gdi(self):
         """Test creating a GDI file with all information provided."""
+        # pylint: disable=too-many-locals
         name = "It's Only Tuesday (Jp)"
         offsets = [0, 1000, 20000, 300000]
         exts = ["bin", "bin", "bin", "raw"]
@@ -38,9 +39,9 @@ class TestGdiGenerator:
             assert int(four_oh) == (4 * ((index) % 2))
             assert int(game_num) == game_number
 
-    # pytest disable=too-many-locals
     def test_fully_random_gdi(self):
         """Test creating a GDI file with the minimum information provided."""
+        # pylint: disable=too-many-locals
         name_a = "It's Wednesday Now (En/Fr/De/Es/It)"
         name_b = "Here Comes Thursday (USA) (v1.1b)"
         generator = GdiGenerator(name_a)
