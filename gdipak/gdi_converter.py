@@ -131,7 +131,7 @@ class GdiConverter:
             if start_quote_index == -1 and end_quote_index == -1:
                 continue
             # Invalid Line
-            if start_quote_index == -1 or end_quote_index == -1:
+            if start_quote_index == end_quote_index:
                 raise ValueError(
                     f"Line {index + 1} only contains a single quote, file names "
                     "should be between two quotes."

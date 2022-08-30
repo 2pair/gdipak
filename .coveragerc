@@ -5,12 +5,12 @@ source=
     .
 
 omit=
-    .\venv\*
-    ./venv/*
-    .\runtests.py
-    ./runtests.py
-    .\setup.py
-    ./setup.py
+    venv*
+    .venv*
+    env*
+    .env*
+    setup.py
+    tests
 
 [html]
 directory = coverage_html_report

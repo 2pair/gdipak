@@ -119,6 +119,19 @@ class TestGdiConverter:
             in the shed"""
         )
 
+    def test__replace_file_names_replace_file_names(self):
+        """Tests replacing file names with the new naming convention."""
+        contents = (
+            '1 0 4 2252 Fella\'s Guys (Jp) (Track 1).bin" 0\n'
+        )
+        with pytest.raises(ValueError) as ex:
+            GdiConverter(file_contents="1")._replace_file_names(contents)
+        assert (
+            "Line 1 only contains a single quote, "
+            "file names should be between two quotes."
+            in str(ex.value)
+        )
+
     def test__replace_file_names(self):
         """Tests replacing file names with the new naming convention."""
         contents = (
