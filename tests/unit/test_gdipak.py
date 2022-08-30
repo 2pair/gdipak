@@ -27,7 +27,7 @@ class TestGetFilesInDir:
     def test_special_chars(self, tmp_path):
         """Test a directory and file with special characters."""
         dir_name = "gamedir 2! (The Re-direning)"
-        file_name = "123 !@#$%^&()~S{}[]-=_+'`.bin"
+        file_name = "123 !@#$%^&()~S\{\}[]-=_+'`.bin"
         tmp_path = tmp_path / dir_name
         tmp_path.mkdir()
         (tmp_path / file_name).touch()
