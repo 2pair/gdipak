@@ -72,7 +72,7 @@ class FileProcessor:
         """Based on the input file name, generates an output file name.
         arguments:
             file (str): A string representing EITHER a path to a file, with extension
-                or the filename, with extension.
+                or the file name, with extension.
         returns:
             str: A string that GDEMU expects for that file's name.
         raises:

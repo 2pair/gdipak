@@ -3,6 +3,7 @@ consumption by the Madsheep SD card maker for GDEMU"""
 
 import fnmatch
 import os
+from pathlib import Path
 from typing import List
 
 from gdipak.arg_parser import RecursiveMode
@@ -17,14 +18,14 @@ def pack_gdi(  # pylint: disable=too-many-locals; # noqa: C901
     namefile: bool = False,
     modify_files: bool = False,
 ) -> None:
-    """converts and copies or renames all files in a directory
-    and optionally subdirectories.
+    """Converts and copies or renames all files in a directory and optionally
+        subdirectories.
 
     Args:
-        in_dir: The directory to process
-        out_dir: The output directory
-        recursive: If subdirectories should be processed
-        namefile: Should a name file be generated
+        in_dir: The directory to process.
+        out_dir: The output directory.
+        recursive: If subdirectories should be processed.
+        namefile: Should a name file be generated.
         modify_files: If the files in the input directory should be modified.
           If in_dir == out_dir the files will be modified in the same directory.
           If in_dir != out_dir the files will first be moved to the output
@@ -80,18 +81,12 @@ def pack_gdi(  # pylint: disable=too-many-locals; # noqa: C901
             pack_gdi(subdir, sub_out_dir, recursive, namefile)
 
 
-def write_name_file(out_dir: str, gdi_file: str) -> None:
-    """Creates an empty text file with the name of the given gdi file
+def write_name_file(out_dir: str | Path, gdi_file: str) -> None:
+    """Creates an empty text file with the name of the given gdi file.
 
     Args:
-        out_dir: The location to write the name file
-        gdi_file: The file who's name will be used for the name file
-
-    Returns:
-        None
-
-    Raises:
-        None
+        out_dir: The location to write the name file.
+        gdi_file: The file who's name will be used for the name file.
     """
     if not os.path.exists(out_dir):
         os.makedirs(os.path.realpath(out_dir))
@@ -104,18 +99,12 @@ def write_name_file(out_dir: str, gdi_file: str) -> None:
         f_out.write("")
 
 
-def write_file(in_file: str, out_file: str) -> None:
-    """Generates a file with the given contents
+def write_file(in_file: Path | str, out_file: Path | str) -> None:
+    """Generates a file with the given contents.
 
     Args:
-        in_file: a path to a file from which to copy data
-        out_file: a path to which to write the data
-
-    Returns:
-        None
-
-    Raises:
-        None
+        in_file: a path to a file from which to copy data.
+        out_file: a path to which to write the data.
     """
     if in_file == out_file:
         return
@@ -129,16 +118,13 @@ def write_file(in_file: str, out_file: str) -> None:
 
 
 def get_files_in_dir(directory: str) -> List[str]:
-    """Searches in a given directory for files relevant to the gdi format
+    """Searches in a given directory for files relevant to the gdi format.
 
     Args:
-        directory: A path-like object for a directory to search in
+        directory: A path-like object for a directory to search in.
 
     Returns:
         A  list of file paths.
-
-    Raises:
-        None
     """
     files = []
     with os.scandir(directory) as itr:
@@ -152,18 +138,15 @@ def get_files_in_dir(directory: str) -> List[str]:
 
 
 def get_subdirs_in_dir(directory: str, max_recursion: int = None) -> List[str]:
-    """Searches in a given directory for subdirectories
+    """Searches in a given directory for subdirectories.
 
     Args:
-        directory: A path-like object for a directory to search in
+        directory: A path-like object for a directory to search in.
         max:recursion: The number of times to look in sub-directories for more
           directories.
 
     Returns:
         A  list of subdirectories.
-
-    Raises:
-        None
     """
     dirs = []
     with os.scandir(directory) as itr:

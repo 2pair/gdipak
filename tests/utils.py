@@ -1,7 +1,7 @@
 """Functions used across various unit tests."""
 
 from collections import namedtuple
-from os import path, scandir
+from os import path
 from pathlib import Path
 import random
 import re
@@ -209,7 +209,7 @@ def check_file_name(file: str, dirname: str) -> str:
 
 
 def check_files(
-    directory: str, expected_exts: List[str], whitelist: List[str] = None
+    directory: Path, expected_exts: List[str], whitelist: List[str] = None
 ) -> None:
     """Validates the file names in a dir.
 
@@ -220,19 +220,38 @@ def check_files(
     """
     whitelist = [] if whitelist is None else whitelist
     exts = dict.fromkeys(expected_exts, 0)
-    dirname = path.basename(directory)
-    with scandir(directory) as itr:
-        for item in itr:
-            if path.isfile(item):
-                if item.name in whitelist:
-                    continue
-                ext = check_file_name(item.name, dirname)
-                if ext in exts:
-                    exts[ext] += 1
-            elif path.isdir(item):
+    for item in directory.iterdir():
+        if item.is_file():
+            if item.name in whitelist:
                 continue
-            else:  # pragma: no cover
-                assert False
+            ext = check_file_name(item.name, directory.name)
+            if ext in exts:
+                exts[ext] += 1
+        elif item.is_dir():
+            continue
+        else:  # pragma: no cover
+            assert False
 
     for count in exts.values():
         assert count > 0
+
+
+def create_dirs_in_dir(
+    base_dir: Path, count: int, start_index: int = 0, prefix: str = "subdir"
+):
+    """Creates the given number of directories within a base directory.
+    Directories will be named f"{prefix}{index}" where index begins at start_index. If
+    start count is 1 the index will be omitted.
+
+    Args:
+        base_dir: The directory in which the other directories are created.
+        count: The number of directories to make.
+        start_index: the first number used in directory names.
+        prefix: A string used in the directory name.
+    """
+    sub_dirs = []
+    for i in range(count):
+        sub_dir = base_dir / f"{prefix}{(start_index + i) if count > 1 else ''}"
+        sub_dir.mkdir()
+        sub_dirs.append(str(sub_dir))
+    return sub_dirs
