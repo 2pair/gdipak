@@ -1,7 +1,7 @@
-"""Tests for tests/utils.py."""
+"""Tests for tests/testing_utils.py."""
 import string
 
-from tests.utils import GdiGenerator
+from tests.testing_utils import GdiGenerator
 
 
 class TestGdiGenerator:

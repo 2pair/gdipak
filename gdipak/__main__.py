@@ -3,7 +3,8 @@ consumption by the Madsheep SD card maker for GDEMU"""
 
 from sys import argv
 from gdipak.arg_parser import ArgParser
-from gdipak import gdipak
+from gdipak.file_utils import get_sub_dirs_in_dir
+from gdipak.packer import CopyPacker, MovePacker
 
 __version__ = 0.1
 
@@ -17,12 +18,35 @@ def main():
     recursive = args["recursive"]
     namefile = args["namefile"]
     modify = args["modify"]
-    if not modify:
-        out_dir = args["out_dir"]
+    # TODO: This doesn't make sense, change it to a move argument.
+    # default will be copying file
+    out_dir = args["out_dir"]
+    if modify:
+        packer_class = MovePacker
     else:
-        out_dir = in_dir
+        packer_class = CopyPacker
 
-    gdipak.pack_gdi(in_dir, out_dir, recursive, namefile, modify)
+    dirs = [in_dir]
+    if recursive:
+        dirs.append(get_sub_dirs_in_dir(in_dir))
+    packer = packer_class(in_dir=in_dir, out_dir=out_dir)
+    packer.package_game(create_name_file=namefile)
+
+    # TODO: This was moved from gdipak.py, broken for now
+    # if recursive:
+    #    subdirs = in_dir
+    #    for subdir in subdirs:
+    #        if modify_files:
+    #            sub_out_dir = subdir
+    #        elif recursive == RecursiveMode.FLATTEN_STRUCTURE:
+    #            sub_out_dir = out_dir
+    #        elif recursive == RecursiveMode.PRESERVE_STRUCTURE:
+    #            sub_out_dir = os.path.join(out_dir, last_dir)
+    #        else:
+    #            raise ValueError(
+    #                """Argument 'recursive' is not a member of the enum
+    #                'RecursiveMode'"""
+    #            )
 
 
 if __name__ == "__main__":

@@ -1,11 +1,12 @@
 """Tests for gdi_converter.py"""
+from pathlib import Path
 from random import randint
 import string
 import textwrap
 import pytest
 
 from gdipak.gdi_converter import GdiConverter
-from tests.utils import GdiGenerator
+from tests.testing_utils import GdiGenerator
 
 
 @pytest.fixture(name="gdi_file")
@@ -36,12 +37,12 @@ class TestGdiConverter:
     def test_file_path_as_path(self, tmp_path):
         """Test passing a Path object as the file_path."""
         gdi_converter = GdiConverter(tmp_path)
-        assert gdi_converter.file_path == str(tmp_path)
+        assert gdi_converter.file_path == Path(tmp_path)
 
     def test_file_path_as_str(self, tmp_path):
         """Test passing a str object as the file_path."""
         gdi_converter = GdiConverter(str(tmp_path))
-        assert gdi_converter.file_path == str(tmp_path)
+        assert gdi_converter.file_path == Path(tmp_path)
 
     def test_file_contents(self):
         """Test passing file_contents."""
@@ -121,15 +122,12 @@ class TestGdiConverter:
 
     def test__replace_file_names_replace_file_names(self):
         """Tests replacing file names with the new naming convention."""
-        contents = (
-            '1 0 4 2252 Fella\'s Guys (Jp) (Track 1).bin" 0\n'
-        )
+        contents = "1 0 4 2252 Fella's Guys (Jp) (Track 1).bin\" 0\n"
         with pytest.raises(ValueError) as ex:
             GdiConverter(file_contents="1")._replace_file_names(contents)
         assert (
             "Line 1 only contains a single quote, "
-            "file names should be between two quotes."
-            in str(ex.value)
+            "file names should be between two quotes." in str(ex.value)
         )
 
     def test__replace_file_names(self):

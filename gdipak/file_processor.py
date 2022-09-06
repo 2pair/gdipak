@@ -1,11 +1,12 @@
 """Parses files that are part of the GDI package and generates
 new files that are expected by the SD card maker program"""
 
+from pathlib import Path
 import re
-from os import path
-from tempfile import mkstemp
 
 
+# TODO: This doesn't need to be a class anymore. just move the function and regex to
+# utils
 class FileProcessor:
     """Parses and converts files into a format required by the SD card maker."""
 
@@ -23,64 +24,21 @@ class FileProcessor:
     )
 
     @classmethod
-    def get_output_file_contents(cls, file_path: str) -> str:
-        """Return the path to a file that contains the output file's contents.
-        Based on the input filetype this may just be the input file or a tmp file.
-
-        Args:
-            file_path (str): A string representing the path to a file, with extension.
-
-        Returns:
-            str: The location on disk where the file's contents are stored. This may be
-                 a temporary directory or the original file's location.
-
-        Raises:
-            ValueError, SyntaxError
-        """
-        _1, ext = path.splitext(file_path)
-        if ext == ".gdi":
-            return path.realpath(cls.process_gdi(file_path))
-        if ext in cls.valid_extensions:
-            return path.realpath(file_path)
-        raise ValueError("Invalid file type")
-
-    @classmethod
-    def process_gdi(cls, gdi_file: str) -> str:
-        """processes the contents of the gdi file to sanitize track names and remove
-        white space to comply with SD card maker expectations.
-
-        Args:
-            gdi_file (str): A string representing the path to a gdi file name, with
-                extension.
-        Returns:
-            str: A string representing the path to the processed file contents. This
-                is a temporary file. The original file is not modified.
-        Raises:
-            ValueError, SyntaxError
-        """
-        tmp_file, tmp_path = mkstemp()
-        with open(gdi_file, "r", encoding="UTF-8") as f_gdi:
-            with open(tmp_file, "w", encoding="UTF-8") as f_tmp:
-                for line in f_gdi:
-                    # TODO: process the line.
-                    f_tmp.write(line)
-
-                return tmp_path
-
-    @classmethod
-    def convert_file_name(cls, file: str) -> str:
+    def convert_file_name(cls, file_path: str | Path) -> str:
         """Based on the input file name, generates an output file name.
-        arguments:
-            file (str): A string representing EITHER a path to a file, with extension
+        Args:
+            file_path: A string representing EITHER a path to a file, with extension
                 or the file name, with extension.
-        returns:
-            str: A string that GDEMU expects for that file's name.
-        raises:
+
+        Returns:
+            A string that GDEMU expects for that file's name.
+
+        Raises:
             ValueError, SyntaxError
         """
-        file_dir, file_name = path.split(file)
-        name, ext = path.splitext(file_name)
-        ext = ext.lower()
+        file_path = Path(file_path)
+        name = file_path.stem
+        ext = file_path.suffix.lower()
         if not ext or ext not in cls.valid_extensions:
             raise ValueError("Invalid file type")
         if ext == ".gdi":
@@ -89,4 +47,5 @@ class FileProcessor:
         if not result:
             raise SyntaxError("File name does not contain track information")
         track_num = str(int(result.group(1)))  # removes leading zeros
-        return path.join(file_dir, "track" + track_num.zfill(2) + ext)
+        return "track" + track_num.zfill(2) + ext
+        # return path.join(file_dir, "track" + track_num.zfill(2) + ext)
