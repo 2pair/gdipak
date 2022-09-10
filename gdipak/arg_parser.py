@@ -1,7 +1,8 @@
 """Constructs argument parsing class and validates arguments"""
-import sys
-import os
+
 import enum
+from pathlib import Path
+from sys import exit as sys_exit
 
 from argparse import ArgumentParser
 
@@ -18,6 +19,16 @@ class RecursiveMode(enum.Enum):
     # ./in/good_games/game_a -> ./out/game_a
     # ./in/bad_games/game_b -> ./out/game_b
     FLATTEN_STRUCTURE = 1
+
+
+@enum.unique
+class OperatingMode(enum.Enum):
+    """Enum for the type of action the program performs."""
+
+    # In copy mode the input files are not modified, new files are created.
+    COPY = "COPY"
+    # In move mode the input files are moved to the output directory and then modified.
+    MODIFY = "MODIFY"
 
 
 class ArgParser:
@@ -56,34 +67,30 @@ class ArgParser:
         Returns:
             dict: A dictionary of the args modified to enforce rules.
         """
-        fail_msg = "Input directory is not a directory"
-        # mandatory argument
-        if args["in_dir"] is None:
-            print(fail_msg)
-            sys.exit(0)
+        try:
+            error_str = "Input directory is not a directory"
+            if not Path(args["in_dir"]).is_dir():
+                print(error_str)
+                sys_exit(0)
+        except TypeError:
+            print(error_str)
+            sys_exit(0)
 
-        if not os.path.isdir(args["in_dir"]):
-            print(fail_msg)
-            sys.exit(0)
+        if args["out_dir"] == "in-dir":
+            args["out_dir"] = args["in_dir"]
+        try:
+            error_str = "Output directory is not a directory."
+            if not Path(args["out_dir"]).is_dir():
+                print()
+                sys_exit(0)
+        except TypeError:
+            print(error_str)
+            sys_exit(0)
 
-        if args["out_dir"] is None and args["modify"] is None:
-            print("Neither output directory nor modify option was specified")
-            sys.exit(0)
-        elif args["out_dir"] is not None:
-            if not os.path.isdir(args["out_dir"]):
-                print("Output directory is not a directory")
-                sys.exit(0)
+        args["mode"] = OperatingMode(args["mode"])
 
-        # if we are modifying the files we must use preserve structure recursive mode
-        if args["modify"] is True:
-            args["recursive"] = RecursiveMode.PRESERVE_STRUCTURE
-        elif args["recursive"] is not None:
-            fail_msg = 'valid values for "recursive" are blank, 0, and 1.'
-            r_mode = args["recursive"]
-            if r_mode not in (0, 1):
-                print(fail_msg)
-                sys.exit(0)
-            args["recursive"] = RecursiveMode(r_mode)
+        if args["recursive"] is not None:
+            args["recursive"] = RecursiveMode(args["recursive"])
 
         return args
 
@@ -100,7 +107,13 @@ class ArgParser:
         parser = ArgumentParser(
             description="""Scans a directory and optionally subdirectories for *.gdi
             files and the related *.bin files. creates new file names that conform
-            to the expected format for the GDEMU"""
+            to the expected format for the GDEMU.
+
+            NOTE: If the 'recursive' argument is NOT given, it is assumed that 'in-dir'
+            contains the files for one game. In this case the output files will be
+            written directly to the 'out-dir'. if the 'recursive' argument IS given, it
+            is assumed that the 'in-dir' DOES NOT contain files for a game but instead
+            contains a sub directory for each game."""
         )
         parser.add_argument(
             "-v", "--version", action="version", version=str(self.version)
@@ -108,57 +121,63 @@ class ArgParser:
 
         parser.add_argument(
             "-i",
-            "--indirectory",
+            "--in-dir",
             action="store",
             dest="in_dir",
             required=True,
-            help="The directory to scan for *.gdi files for processing",
+            help="The directory to scan for *.gdi files for processing.",
             metavar="ROOT_SEARCH_DIRECTORY",
+        )
+        parser.add_argument(
+            "-o",
+            "--out-dir",
+            action="store",
+            dest="out_dir",
+            required=True,
+            help="""the directory to output results to. This can be set to 'in-dir' as a
+                shortcut if it is desired that the 'out-dir' be the same as the
+                'in-dir'.""",
+            metavar="OUTPUT_DIRECTORY",
+        )
+        parser.add_argument(
+            "-m",
+            "--mode",
+            action="store",
+            choices=("COPY", "MODIFY"),
+            type=str.upper,
+            dest="mode",
+            required=True,
+            help="""Chooses the mode of operation. In 'COPY' mode The original files
+                will not be moved, modified, or deleted. In 'MODIFY' mode the input
+                files will be moved to the output directory and then edited in
+                place. Note that 'COPY' mode will use roughly 2x the initial disk
+                space.""",
         )
         parser.add_argument(
             "-r",
             "--recursive",
             action="store",
+            choices=(0, 1),
             nargs="?",
             type=int,
             const=0,
             dest="recursive",
             required=False,
             help="""If specified will search within subdirectories. Valid values are
-                blank, 0 and 1. In mode 0 directory structure is preserved in the
-                output directory. In mode 1 each game output directory is created
-                in a flat directory. If no value is specified or --modify is specified
-                mode 0 is used.""",
+                blank, 0 and 1. In mode 0 the input directory structure is preserved in
+                the output directory. In mode 1 each game output directory is created
+                as an immediate sub-directory of the output directory. If no value is
+                specified mode 0 is used.""",
             metavar="MODE",
         )
         parser.add_argument(
             "-n",
-            "--namefile",
+            "--name-file",
             action="store_true",
             dest="namefile",
             required=False,
             help="""If specified will create a *.txt file with the original name of the
             *.gdi file""",
-        )
-
-        out_group = parser.add_mutually_exclusive_group(required=True)
-        out_group.add_argument(
-            "-m",
-            "--modify",
-            action="store_true",
-            dest="modify",
-            required=False,
-            help="""If specified will modify files in place, otherwise
-                files will be copied with new names to the output directory""",
-        )
-        out_group.add_argument(
-            "-o",
-            "--outdirectory",
-            action="store",
-            dest="out_dir",
-            required=False,
-            help="the directory to output results to",
-            metavar="OUTPUT_DIRECTORY",
         )
 
         return parser

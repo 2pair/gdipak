@@ -1,10 +1,10 @@
 """ tests for the argument parser"""
 
 from argparse import ArgumentParser
-from os import path
+from pathlib import Path
 import pytest
 
-from gdipak.arg_parser import ArgParser, RecursiveMode
+from gdipak.arg_parser import ArgParser, OperatingMode, RecursiveMode
 
 
 class TestRecursiveMode:
@@ -26,6 +26,25 @@ class TestRecursiveMode:
             RecursiveMode(2)
 
 
+class TestOperatingMode:
+    """Tests operating mode enum."""
+
+    def test_copy(self):
+        """Test copy mapping."""
+        mode = OperatingMode("COPY")
+        assert mode == OperatingMode.COPY
+
+    def test_move(self):
+        """Test move mapping."""
+        mode = OperatingMode("MODIFY")
+        assert mode == OperatingMode.MODIFY
+
+    def test_invalid(self):
+        """Test invalid enum value."""
+        with pytest.raises(ValueError):
+            OperatingMode(2)
+
+
 class TestArgs:
     """Tests the argument parser."""
 
@@ -33,7 +52,7 @@ class TestArgs:
     @classmethod
     def setup_class(cls):
         """Test class setup method."""
-        cls.arg_parser = ArgParser("0")
+        cls.arg_parser = ArgParser(version="0")
 
     def test_setup_argparser(self):
         """Test setup argparser."""
@@ -46,74 +65,83 @@ class TestArgs:
         with pytest.raises(SystemExit):
             arg_parser.parse_args(["-v"])
 
-    def test_valid_out_dir(self):
-        """Test setting optional output directory argument."""
+    def test_valid_required_args(self):
+        """Test setting only required arguments."""
         arg_parser = self.arg_parser._ArgParser__setup()
-        parsed = arg_parser.parse_args(["-i", ".", "-o", "./out"])
+        parsed = arg_parser.parse_args(["-i", ".", "-o", "./out", "-m", "modify"])
         assert parsed.in_dir == "."
         assert parsed.out_dir == "./out"
-        assert parsed.modify is False
+        assert parsed.mode == "MODIFY"
         assert parsed.namefile is False
         assert parsed.recursive is None
 
-    def test_valid_modify(self):
-        """Test setting optional modify argument."""
+    def test_valid_all_args(self):
+        """Test setting optional and required arguments."""
         arg_parser = self.arg_parser._ArgParser__setup()
-        parsed = arg_parser.parse_args(["-i", ".", "-m"])
-        assert parsed.out_dir is None
-        assert parsed.modify is True
-
-    def test_valid_namefile(self):
-        """Test setting optional namefile argument."""
-        arg_parser = self.arg_parser._ArgParser__setup()
-        parsed = arg_parser.parse_args(["-i", ".", "-m", "-n"])
+        parsed = arg_parser.parse_args(
+            ["-i", ".", "-o", "./out", "-m", "copy", "-r", "1", "-n"]
+        )
+        assert parsed.in_dir == "."
+        assert parsed.out_dir == "./out"
+        assert parsed.mode == "COPY"
         assert parsed.namefile is True
+        assert parsed.recursive == 1
 
     def test_valid_recursive_default(self):
         """Test default recursive argument."""
         arg_parser = self.arg_parser._ArgParser__setup()
-        parsed = arg_parser.parse_args(["-i", ".", "-m", "-r"])
+        parsed = arg_parser.parse_args(["-i", ".", "-o", ".", "-m", "COPY", "-r"])
         assert parsed.recursive == 0
 
     def test_valid_recursive_ints(self):
         """Tests setting optional recursive mode argument."""
         arg_parser = self.arg_parser._ArgParser__setup()
-        parsed = arg_parser.parse_args(["-i", ".", "-m", "-r", "0"])
+        parsed = arg_parser.parse_args(["-i", ".", "-o", ".", "-m", "copy", "-r", "0"])
         assert parsed.recursive == 0
-        parsed = arg_parser.parse_args(["-i", ".", "-m", "-r", "1"])
+        parsed = arg_parser.parse_args(["-i", ".", "-o", ".", "-m", "copy", "-r", "1"])
         assert parsed.recursive == 1
-        parsed = arg_parser.parse_args(["-i", ".", "-m", "-r", "333"])
-        assert parsed.recursive == 333
 
-    def test_invalid_missing_in_dir_arg(self):
-        """Test not setting the input directory argument."""
+    def test_invalid_recursive_int(self):
+        """Tests setting optional recursive mode to an invalid value."""
         arg_parser = self.arg_parser._ArgParser__setup()
         with pytest.raises(SystemExit):
-            arg_parser.parse_args(["-o", "./out"])
-
-    def test_invalid_missing_in_dir_val(self):
-        """Test not passing a value for the input directory argument."""
-        arg_parser = self.arg_parser._ArgParser__setup()
-        with pytest.raises(SystemExit):
-            arg_parser.parse_args(["-i", "-o", "./out"])
-
-    def test_invalid_missing_out_dir_val(self):
-        """Test not passing a value for the output directory argument."""
-        arg_parser = self.arg_parser._ArgParser__setup()
-        with pytest.raises(SystemExit):
-            arg_parser.parse_args(["-i", ".", "-o"])
-
-    def test_invalid_out_dir_modify(self):
-        """Test passing both an output directory argument and a modify argument."""
-        arg_parser = self.arg_parser._ArgParser__setup()
-        with pytest.raises(SystemExit):
-            arg_parser.parse_args(["-i", ".", "-o", "./out", "-m"])
+            arg_parser.parse_args(["-i", ".", "-o", ".", "-m", "copy", "-r", "33"])
 
     def test_invalid_recursive(self):
         """Test passing an invalid data type to the recursive argument"""
         arg_parser = self.arg_parser._ArgParser__setup()
         with pytest.raises(SystemExit):
             arg_parser.parse_args(["-i", ".", "-m", "-r", "recursive please!"])
+
+    def test_invalid_missing_in_dir_arg(self):
+        """Test not setting the input directory argument."""
+        arg_parser = self.arg_parser._ArgParser__setup()
+        with pytest.raises(SystemExit):
+            arg_parser.parse_args(["-o", "./out", "-m", "copy"])
+
+    def test_invalid_missing_in_dir_val(self):
+        """Test not passing a value for the input directory argument."""
+        arg_parser = self.arg_parser._ArgParser__setup()
+        with pytest.raises(SystemExit):
+            arg_parser.parse_args(["-i", "-o", "./out", "-m", "copy"])
+
+    def test_invalid_missing_out_dir_arg(self):
+        """Test not setting the output directory argument."""
+        arg_parser = self.arg_parser._ArgParser__setup()
+        with pytest.raises(SystemExit):
+            arg_parser.parse_args(["-i", ".", "-m", "copy"])
+
+    def test_invalid_missing_out_dir_val(self):
+        """Test not passing a value for the output directory argument."""
+        arg_parser = self.arg_parser._ArgParser__setup()
+        with pytest.raises(SystemExit):
+            arg_parser.parse_args(["-i", ".", "-o", "-m", "copy"])
+
+    def test_invalid_mode(self):
+        """Tests setting operating mode to an invalid value."""
+        arg_parser = self.arg_parser._ArgParser__setup()
+        with pytest.raises(SystemExit):
+            arg_parser.parse_args(["-i", ".", "-o", ".", "-m", "mogdifly"])
 
 
 class TestValidateArgs:
@@ -127,9 +155,9 @@ class TestValidateArgs:
         cls.base_args = {
             "in_dir": None,
             "out_dir": None,
-            "modify": None,
+            "mode": "COPY",
             "recursive": None,
-            "namefile": None,
+            "namefile": False,
         }
 
     def test_current_dir(self):
@@ -146,10 +174,17 @@ class TestValidateArgs:
 
     def test_fully_qualified_dir(self):
         """Test that the fully qualified directory path is valid."""
-        fqd = path.abspath(".")
+        fqd = Path(".").resolve()
         args = self.base_args
         args.update({"in_dir": fqd, "out_dir": fqd})
         self.arg_parser._ArgParser__validate_args(args)
+
+    def test_out_dir_equals_in_dir(self, tmp_path):
+        """Test that the parent directory is valid."""
+        args = self.base_args
+        args.update({"in_dir": str(tmp_path), "out_dir": "in-dir"})
+        self.arg_parser._ArgParser__validate_args(args)
+        assert args["in_dir"] == args["out_dir"]
 
     def test_invalid_in_dir(self):
         """Test that something that isn't a directory is not valid."""
@@ -158,17 +193,17 @@ class TestValidateArgs:
         with pytest.raises(SystemExit):
             self.arg_parser._ArgParser__validate_args(args)
 
-    def test_nonexistent_in_dir(self, tmpdir):
+    def test_nonexistent_in_dir(self, tmp_path):
         """Test that a nonexistent directory is not valid."""
         args = self.base_args
-        args.update({"in_dir": tmpdir + "/fake_dir", "out_dir": "."})
+        args.update({"in_dir": tmp_path / "fake_dir", "out_dir": "."})
         with pytest.raises(SystemExit):
             self.arg_parser._ArgParser__validate_args(args)
 
-    def test_file_as_in_dir(self, tmpdir):
+    def test_file_as_in_dir(self, tmp_path):
         """Test that a file name is not valid."""
-        file = tmpdir.join("a file")
-        file.write("")
+        file = tmp_path / "a file"
+        file.touch()
         args = self.base_args
         args.update({"in_dir": file, "out_dir": "."})
         with pytest.raises(SystemExit):
@@ -195,17 +230,17 @@ class TestValidateArgs:
         with pytest.raises(SystemExit):
             self.arg_parser._ArgParser__validate_args(args)
 
-    def test_nonexistent_out_dir(self, tmpdir):
+    def test_nonexistent_out_dir(self, tmp_path):
         """Test that a nonexistent directory is not valid."""
         args = self.base_args
-        args.update({"in_dir": ".", "out_dir": tmpdir + "/fake_dir"})
+        args.update({"in_dir": ".", "out_dir": tmp_path / "fake_dir"})
         with pytest.raises(SystemExit):
             self.arg_parser._ArgParser__validate_args(args)
 
-    def test_file_as_out_dir(self, tmpdir):
+    def test_file_as_out_dir(self, tmp_path):
         """Test that a file name is not valid."""
-        file = tmpdir.join("a file")
-        file.write("")
+        file = tmp_path / "a file"
+        file.touch()
         args = self.base_args
         args.update({"in_dir": ".", "out_dir": file})
         with pytest.raises(SystemExit):
@@ -221,24 +256,13 @@ class TestValidateArgs:
         args.update({"in_dir": ".", "out_dir": ".", "recursive": 1})
         self.arg_parser._ArgParser__validate_args(args)
 
-    def test_recursive_invalid(self):
-        """Test things that aren't recursive modes are not valid."""
-        args = self.base_args
-        args.update({"in_dir": ".", "out_dir": ".", "recursive": 27})
-        with pytest.raises(SystemExit):
-            self.arg_parser._ArgParser__validate_args(args)
-
-        args = self.base_args
-        args.update({"in_dir": ".", "out_dir": ".", "recursive": "Houston"})
-        with pytest.raises(SystemExit):
-            self.arg_parser._ArgParser__validate_args(args)
-
     def test_recursive_and_modify(self):
         """Test recursive with modify is valid."""
         args = self.base_args
-        args.update({"in_dir": ".", "out_dir": ".", "recursive": 1, "modify": True})
+        args.update({"in_dir": ".", "out_dir": ".", "recursive": 1, "mode": "MODIFY"})
         args = self.arg_parser._ArgParser__validate_args(args)
-        assert args["recursive"] == RecursiveMode.PRESERVE_STRUCTURE
+        assert args["recursive"] == RecursiveMode.FLATTEN_STRUCTURE
+        assert args["mode"] == OperatingMode.MODIFY
 
 
 class TestRun:
@@ -247,19 +271,19 @@ class TestRun:
     def test_run_out_dir_recursive(self):
         """Test with a given out directory and the recursive flag."""
         arg_parser = ArgParser("0")
-        args = arg_parser(["-i", ".", "-o", "..", "-r"])
+        args = arg_parser(["-i", ".", "-o", "..", "-m", "copy", "-r"])
         assert args["in_dir"] == "."
         assert args["out_dir"] == ".."
+        assert args["mode"] == OperatingMode.COPY
         assert args["recursive"] == RecursiveMode.PRESERVE_STRUCTURE
-        assert args["modify"] is False
         assert args["namefile"] is False
 
     def test_run_modify_namefile(self):
         """Test with a the modify flag and the namefile flag."""
         arg_parser = ArgParser("0")
-        args = arg_parser(["-i", ".", "-m", "-n"])
+        args = arg_parser(["-i", ".", "-o", "in-dir", "-m", "modify", "-n"])
         assert args["in_dir"] == "."
-        assert args["modify"] is True
-        assert args["recursive"] == RecursiveMode.PRESERVE_STRUCTURE
+        assert args["out_dir"] == "."
+        assert args["mode"] == OperatingMode.MODIFY
+        assert args["recursive"] is None
         assert args["namefile"] is True
-        assert args["out_dir"] is None
