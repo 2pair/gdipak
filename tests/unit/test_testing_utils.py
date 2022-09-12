@@ -15,7 +15,7 @@ class TestGdiGenerator:
         exts = ["bin", "bin", "bin", "raw"]
         game_number = 2345
         line_end = "\r\n"
-        generator = GdiGenerator(name, offsets, exts, game_number, line_end)
+        generator = GdiGenerator(name, exts, offsets, game_number, line_end)
         gdi, metadata = generator()
         assert metadata["name"] == name
         assert metadata["game_num"] == game_number

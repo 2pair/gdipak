@@ -1,10 +1,13 @@
 """Tests for utils.py"""
 
+from collections import namedtuple
 from pathlib import Path
+import pytest
+
+from gdipak.arg_parser import RecursiveMode
+from gdipak import file_utils
 
 from tests.testing_utils import create_dirs_in_dir
-
-from gdipak import file_utils
 
 
 class TestWriteFile:
@@ -261,3 +264,118 @@ class TestWriteNameFile:
         file_utils.write_name_file(out_dir, gdi_file_name)
         file_name = Path(out_dir) / game_name
         assert file_name.is_file()
+
+
+class TestTransposePath:
+    """Tests for the transpose_path function."""
+
+    GamePaths = namedtuple("GamePaths", "in_dir local_game_dir game_dir out_dir")
+
+    @pytest.fixture
+    def game_paths(self, tmp_path):
+        """Setup directories."""
+        in_dir = tmp_path / "input"
+        local_game_dir = Path("breakfast games") / "Egg Monger II"
+        game_dir = in_dir / local_game_dir
+        out_dir = tmp_path / "output"
+        return self.GamePaths(in_dir, local_game_dir, game_dir, out_dir)
+
+    def test_paths_and_preserve_mode(self, game_paths):
+        """Test passing arguments as Paths."""
+        game_out_dir = file_utils.transpose_path(
+            game_path=game_paths.game_dir,
+            in_base_path=game_paths.in_dir,
+            out_base_path=game_paths.out_dir,
+            mode=RecursiveMode.PRESERVE_STRUCTURE,
+        )
+        assert game_out_dir == game_paths.out_dir / game_paths.local_game_dir
+
+    def test_strings_and_preserve_mode(self, game_paths):
+        """Test passing arguments as strings."""
+        game_out_dir = file_utils.transpose_path(
+            game_path=str(game_paths.game_dir),
+            in_base_path=str(game_paths.in_dir),
+            out_base_path=str(game_paths.out_dir),
+            mode=RecursiveMode.PRESERVE_STRUCTURE,
+        )
+        assert game_out_dir == game_paths.out_dir / game_paths.local_game_dir
+
+    def test_flatten_mode(self, game_paths):
+        """Test passing arguments as Paths."""
+        game_out_dir = file_utils.transpose_path(
+            game_path=game_paths.game_dir,
+            in_base_path=game_paths.in_dir,
+            out_base_path=game_paths.out_dir,
+            mode=RecursiveMode.FLATTEN_STRUCTURE,
+        )
+        assert game_out_dir == game_paths.out_dir / game_paths.local_game_dir.name
+
+
+class TestConvertFileName:
+    """Tests file name conversion"""
+
+    def test_convert_gdi(self):
+        """Tests converting a gdi file name."""
+        result = file_utils.convert_file_name("Very Good Game ~PAL~.gdi")
+        assert result == "disc.gdi"
+
+    def test_convert_track_names(self):
+        """Tests converting track names."""
+        result = file_utils.convert_file_name("Very Good Game (Track 1) PAL.raw")
+        assert result == "track01.raw"
+
+        result = file_utils.convert_file_name(
+            "track racing game 2-track5-(region and language information).bin"
+        )
+        assert result == "track05.bin"
+
+        result = file_utils.convert_file_name(
+            "It's Incredible! - Worldwide?! (Europe) (En,Fr,De,Es) (Track0008).bin"
+        )
+        assert result == "track08.bin"
+
+        result = file_utils.convert_file_name("_THE_GAME_TRACK_4_.bin")
+        assert result == "track04.bin"
+
+        result = file_utils.convert_file_name("Sometimes.People.Do.This.Track.12.raw")
+        assert result == "track12.raw"
+
+    def test_convert_track_names_with_dirs(self, tmpdir):
+        """Tests converting paths to tracks."""
+        result = file_utils.convert_file_name(
+            Path(tmpdir) / "Very Good Game (Track 1) PAL.raw"
+        )
+        assert result == "track01.raw"
+
+        result = file_utils.convert_file_name(
+            Path(tmpdir)
+            / "track racing game 2-track5-(region and language information).bin"
+        )
+        assert result == "track05.bin"
+
+        result = file_utils.convert_file_name(
+            Path(tmpdir)
+            / "It's Incredible! - Worldwide?! (Europe) (En,Fr,De,Es) (Track0008).bin"
+        )
+        assert result == "track08.bin"
+
+        result = file_utils.convert_file_name(Path(tmpdir) / "_THE_GAME_TRACK_4_.bin")
+        assert result == "track04.bin"
+
+        result = file_utils.convert_file_name(
+            Path(tmpdir) / "Sometimes.People.Do.This.Track.12.raw"
+        )
+        assert result == "track12.raw"
+
+    def test_bad_file_type(self):
+        """Tests fails when given an invalid file type."""
+        with pytest.raises(ValueError):
+            file_utils.convert_file_name("Very Good Game.cdi")
+
+    def test_ambiguous_file_name(self):
+        """Test fails when given a track of unknown number."""
+        with pytest.raises(SyntaxError):
+            file_utils.convert_file_name("Very Good Game.bin")
+
+        with pytest.raises(SyntaxError):
+            file_utils.convert_file_name("Track_Attack.bin")

@@ -2,7 +2,7 @@
 from pathlib import Path
 import re
 
-from gdipak.file_processor import FileProcessor
+from gdipak.file_utils import convert_file_name
 
 
 class GdiConverter:
@@ -141,7 +141,7 @@ class GdiConverter:
                 )
             start_quote_index += 1
             file_name = line[start_quote_index:end_quote_index]
-            new_file_name = FileProcessor.convert_file_name(file_name)
+            new_file_name = convert_file_name(file_name)
             line = re.sub(re.escape(file_name), new_file_name, line)
             output_contents += line
 

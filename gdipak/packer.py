@@ -3,8 +3,7 @@ consumption by the Madsheep SD card maker for GDEMU"""
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from gdipak.file_processor import FileProcessor
-import gdipak.file_utils as file_utils
+from gdipak import file_utils
 from gdipak.gdi_converter import GdiConverter
 
 
@@ -40,7 +39,7 @@ class BasePacker(ABC):
         Args:
             create_name_file: If True, a name file will also be created."""
         for in_file in self.game_files:
-            out_file = self.out_dir / FileProcessor.convert_file_name(in_file)
+            out_file = self.out_dir / file_utils.convert_file_name(in_file)
             self.file_action(in_file, out_file)
             # in_file can no longer be used, could be gone.
             if out_file.suffix == ".gdi":

@@ -81,7 +81,7 @@ class ArgParser:
         try:
             error_str = "Output directory is not a directory."
             if not Path(args["out_dir"]).is_dir():
-                print()
+                print(error_str)
                 sys_exit(0)
         except TypeError:
             print(error_str)

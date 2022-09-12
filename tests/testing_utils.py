@@ -18,26 +18,26 @@ class GdiGenerator:
     def __init__(
         self,
         game_name: str,
-        track_offsets: List[int] = None,
         track_exts: List[str] = None,
+        track_offsets: List[int] = None,
         game_num: int = None,
         line_end: str = None,
     ) -> None:
         """Args:
         game_name: This is where the fun begins.
-        track_offsets: Optional. A list of track byte offsets. If left as None track
-         count and track offsets will be random.
         track_exts: Optional. A list of extensions to use for the tracks. The
-          extensions should be provided without the dot separator. The length
-          should be equal to the length of the track_offsets list.
+          extensions should be provided without the dot separator.
+        track_offsets: Optional. A list of track byte offsets. If left as None track
+         count and track offsets will be random. The length should be equal to the
+         length of the track_exts list.
         game_num: Optional. The special number assigned to this game. If left None
           game num will be random.
         line_end: Optional.What to use as the line ending. Should be one of \n or
           \r\n. If left None line ending will be random.
         """
         self.game_name = game_name
-        self.track_offsets = track_offsets
         self.track_exts = track_exts
+        self.track_offsets = track_offsets
         self.game_num = game_num
         self.line_end = line_end
 
@@ -48,15 +48,18 @@ class GdiGenerator:
         Returns:
             The GDI file's contents and a metadata dict.
         """
+        track_exts = self.track_exts
+        if track_exts is None:
+            num_tracks = random.randint(2, 20)
+        else:
+            num_tracks = len(track_exts)
         track_offsets = self.track_offsets
         if not track_offsets:
             track_offsets = []
             byte_offset = 0
-            num_tracks = random.randint(2, 20)
             for _ in range(num_tracks):
                 track_offsets.append(byte_offset)
                 byte_offset = self._byte_offset_generator(byte_offset)
-        track_exts = self.track_exts
         if not track_exts:
             track_exts = []
             for _ in range(num_tracks):
@@ -157,12 +160,11 @@ def make_files(tmp_path: Path, game_name: str) -> Tuple[str, List[str], List[str
         - A list of file names that were created
         - A list of file extensions that were created (used in some tests)
     """
-    file_names = (
-        game_name + ".gdi",
+    file_names = [
         game_name + "(track1).bin",
         game_name + "(track2).bin",
         game_name + "(track3).raw",
-    )
+    ]
     game_dir = tmp_path / game_name
     game_dir.mkdir()
     file_extensions = []
@@ -170,8 +172,14 @@ def make_files(tmp_path: Path, game_name: str) -> Tuple[str, List[str], List[str
         file_path = game_dir / file_name
         file_path.touch()
         _1, ext = path.splitext(file_name)
-        if ext not in file_extensions:
-            file_extensions.append(ext)
+        file_extensions.append(ext)
+
+    dotless_exts = [ext[1:] for ext in file_extensions]
+    contents, _ = GdiGenerator(game_name, track_exts=dotless_exts)()
+    gdi_file = game_dir / (game_name + ".gdi")
+    gdi_file.write_text(contents, encoding="UTF-8")
+    file_names.append(str(gdi_file.name))
+    file_extensions.append(gdi_file.suffix)
 
     return game_dir, file_names, file_extensions
 
@@ -188,6 +196,9 @@ def check_file_name(file: str, dirname: str) -> str:
     """
     file_name = path.basename(file)
     name, ext = path.splitext(file_name)
+    if ext == "":
+        assert name == dirname
+        return None
     if ext.lower() == ".gdi":
         assert name == "disc"
         return ".gdi"
@@ -200,9 +211,6 @@ def check_file_name(file: str, dirname: str) -> str:
             return ".bin"
         except ValueError:  # pragma: no cover
             assert False
-    elif ext.lower() == ".txt":
-        assert name == dirname
-        return ".txt"
     else:  # pragma: no cover
         print("name was: " + name)
         assert False

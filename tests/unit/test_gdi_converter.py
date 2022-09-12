@@ -155,5 +155,5 @@ class TestGdiConverter:
         gdi_converter = GdiConverter(file_path=file_path)
         gdi_converter.convert_file()
         # TODO: Finish writing this test. Need to parse the contents I guess...
-        # TODO: Maybe see about generalizing the other parser that validates the
-        # TODO: Generated GDI.
+        # Maybe see about generalizing the other parser that validates the
+        # Generated GDI.

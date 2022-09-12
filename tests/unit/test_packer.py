@@ -10,7 +10,7 @@ from tests.testing_utils import make_files
 def mock_convert_file_name(monkeypatch):
     """Patch convert file name function."""
     monkeypatch.setattr(
-        "gdipak.file_processor.FileProcessor.convert_file_name",
+        "gdipak.file_utils.convert_file_name",
         lambda in_file: in_file.name,
     )
 
