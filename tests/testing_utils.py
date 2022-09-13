@@ -146,7 +146,7 @@ class GdiGenerator:
         return contents
 
 
-def make_files(tmp_path: Path, game_name: str) -> Tuple[str, List[str], List[str]]:
+def make_files(tmp_path: Path, game_name: str) -> Tuple[Path, List[str], List[str]]:
     """Creates a typical game directory.
 
     Args:
@@ -184,7 +184,7 @@ def make_files(tmp_path: Path, game_name: str) -> Tuple[str, List[str], List[str
     return game_dir, file_names, file_extensions
 
 
-def check_file_name(file: str, dirname: str) -> str:
+def check_file_name(file: str, dirname: str) -> str | None:
     """Makes sure the output file name is correct.
 
     Args:
@@ -244,6 +244,42 @@ def check_files(
         assert count > 0
 
 
+GameData = namedtuple("GameData", "name extensions in_files")
+"""Contains the information necessary to verify a processed game matches the input."""
+
+
+def check_games(
+    games_data: List[GameData], base_path: Path, fail_on_non_dirs: bool = True
+) -> None:
+    """Verifies all games in a directory.
+    All games should be in their own directories within the directory pointed to by
+    base_path.
+
+    Args:
+        games_data: List of game data.
+        base_path: The directory in which
+        fail_on_non_dirs: Whether or not files in the base_path is a fail condition."""
+    found_count = 0
+    for subdir in base_path.iterdir():
+        if not subdir.is_dir():
+            if fail_on_non_dirs:
+                assert False
+            continue
+        for game_data in games_data:
+            if subdir.name != game_data.name:
+                continue
+            check_files(
+                directory=subdir,
+                expected_exts=game_data.extensions,
+                whitelist=game_data.in_files,
+            )
+            found_count += 1
+            break
+        else:
+            assert False
+    assert len(games_data) == found_count
+
+
 def create_dirs_in_dir(
     base_dir: Path, count: int, start_index: int = 0, prefix: str = "subdir"
 ):
@@ -257,9 +293,9 @@ def create_dirs_in_dir(
         start_index: the first number used in directory names.
         prefix: A string used in the directory name.
     """
-    sub_dirs = []
+    subdirs = []
     for i in range(count):
-        sub_dir = base_dir / f"{prefix}{(start_index + i) if count > 1 else ''}"
-        sub_dir.mkdir()
-        sub_dirs.append(str(sub_dir))
-    return sub_dirs
+        subdir = base_dir / f"{prefix}{(start_index + i) if count > 1 else ''}"
+        subdir.mkdir()
+        subdirs.append(str(subdir))
+    return subdirs

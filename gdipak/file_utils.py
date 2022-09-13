@@ -29,7 +29,7 @@ def write_file(in_file: str | Path, out_file: str | Path) -> None:
     out_file.write_bytes(in_file.read_bytes())
 
 
-def get_sub_dirs_in_dir(directory: str | Path, max_recursion: int = None) -> List[Path]:
+def get_subdirs_in_dir(directory: str | Path, max_recursion: int = None) -> List[Path]:
     """Searches in a given directory for subdirectories.
 
     Args:
@@ -48,8 +48,8 @@ def get_sub_dirs_in_dir(directory: str | Path, max_recursion: int = None) -> Lis
         if max_recursion != 0:
             if max_recursion is not None:
                 max_recursion -= 1
-            sub_dirs = get_sub_dirs_in_dir(item, max_recursion)
-            dirs.extend(sub_dirs)
+            subdirs = get_subdirs_in_dir(item, max_recursion)
+            dirs.extend(subdirs)
 
     return dirs
 
@@ -144,4 +144,3 @@ def convert_file_name(file_path: str | Path) -> str:
         raise SyntaxError("File name does not contain track information")
     track_num = str(int(result.group(1)))  # removes leading zeros
     return "track" + track_num.zfill(2) + ext
-    # return path.join(file_dir, "track" + track_num.zfill(2) + ext)

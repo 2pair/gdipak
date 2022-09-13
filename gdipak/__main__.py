@@ -4,7 +4,7 @@ consumption by the Madsheep SD card maker for GDEMU"""
 from sys import argv
 from typing import List
 from gdipak.arg_parser import ArgParser, OperatingMode
-from gdipak.file_utils import get_sub_dirs_in_dir, transpose_path
+from gdipak.file_utils import get_subdirs_in_dir, transpose_path
 from gdipak.packer import CopyPacker, MovePacker
 
 __version__ = 0.1
@@ -34,7 +34,7 @@ def main(args: List[str] = None):
     if recursive is None:
         game_dirs.append(in_dir)
     elif recursive is not None:
-        game_dirs.extend(get_sub_dirs_in_dir(in_dir))
+        game_dirs.extend(get_subdirs_in_dir(in_dir))
 
     for game_dir in game_dirs:
         if recursive is None:

@@ -1,13 +1,9 @@
 """Integration tests for gdipak"""
 
-from pathlib import Path
 import pytest
 
-from tests.testing_utils import make_files, check_files
+from tests.testing_utils import make_files, check_files, check_games, GameData
 import gdipak.__main__ as cli
-
-
-SYS = "__main__.sys"
 
 
 class TestPackGdi:
@@ -58,83 +54,150 @@ class TestPackGdi:
                 with pytest.raises(AssertionError):
                     check_files(item, exts, sog_in_file_names)
 
-    # TODO: I think the following tests need the updated concept of the root dir not
-    # being a game dir.
     def test_recursive_dir_same_out_dir_mode_recursive_mode_zero(self, tmp_path):
         """Test multiple sets of files in a single directory."""
-        dir_path, mg_in_file_names, exts = make_files(tmp_path, "mygame")
-        _0, sog_in_file_names, _2 = make_files(dir_path, "some other game")
+        game1_name = "mygame"
+        game2_name = "some other game"
+        _, game1_in_file_names, exts1 = make_files(tmp_path, game1_name)
+        _, game2_in_file_names, exts2 = make_files(tmp_path, game2_name)
         cli.main(
-            ["gdipak", "-i", str(dir_path), "-o", str(dir_path), "-m", "copy", "-r"]
+            ["gdipak", "-i", str(tmp_path), "-o", str(tmp_path), "-m", "copy", "-r"]
         )
-        check_files(dir_path, exts, mg_in_file_names)
-        for item in dir_path.iterdir():
-            if item.is_dir():
-                check_files(item, exts, sog_in_file_names)
+        games_data = []
+        games_data.append(GameData(game1_name, exts1, game1_in_file_names))
+        games_data.append(GameData(game2_name, exts2, game2_in_file_names))
+        check_games(games_data, tmp_path)
+
+    def test_recursive_dir_same_out_dir_mode_zero(self, tmp_path):
+        """Test multiple sets of files in a single directory with additional nesting."""
+        game1_name = "mygame"
+        game2_name = "some other game"
+        game3_name = "some other other game"
+        _, game1_in_file_names, exts1 = make_files(tmp_path, game1_name)
+        game2_path, game2_in_file_names, exts2 = make_files(tmp_path, game2_name)
+        _, game3_in_file_names, exts3 = make_files(game2_path, game3_name)
+        cli.main(
+            [
+                "gdipak",
+                "-i",
+                str(tmp_path),
+                "-o",
+                str(tmp_path),
+                "-m",
+                "copy",
+                "-r",
+                "0",
+            ]
+        )
+        games_data = []
+        games_data.append(GameData(game1_name, exts1, game1_in_file_names))
+        games_data.append(GameData(game2_name, exts2, game2_in_file_names))
+        check_games(games_data, tmp_path)
+        games_data = [(GameData(game3_name, exts3, game3_in_file_names))]
+        check_games(games_data, game2_path, fail_on_non_dirs=False)
 
     def test_recursive_dir_same_out_dir_mode_one(self, tmp_path):
-        """Test multiple sets of files in a single directory."""
-        dir_path, mg_in_file_names, exts = make_files(tmp_path, "mygame")
-        _0, sog_in_file_names, _2 = make_files(dir_path, "some other game")
-        # mode is changed implicitly due to in_dir == out_dir
-        # gdipak.pack_gdi(dir_path, dir_path, RecursiveMode.FLATTEN_STRUCTURE, False)
-        check_files(dir_path, exts, mg_in_file_names)
-        for item in dir_path.iterdir():
-            if item.is_dir():
-                check_files(item, exts, sog_in_file_names)
+        """Test multiple sets of files in a single directory with additional nesting."""
+        game1_name = "mygame"
+        game2_name = "some other game"
+        game3_name = "some other other game"
+        _, game1_in_file_names, exts1 = make_files(tmp_path, game1_name)
+        game2_path, game2_in_file_names, exts2 = make_files(tmp_path, game2_name)
+        _, game3_in_file_names, exts3 = make_files(game2_path, game3_name)
+        cli.main(
+            [
+                "gdipak",
+                "-i",
+                str(tmp_path),
+                "-o",
+                str(tmp_path),
+                "-m",
+                "copy",
+                "-r",
+                "1",
+            ]
+        )
+        games_data = []
+        games_data.append(GameData(game1_name, exts1, game1_in_file_names))
+        games_data.append(GameData(game2_name, exts2, game2_in_file_names))
+        games_data.append(GameData(game3_name, exts3, game3_in_file_names))
+        check_games(games_data, tmp_path)
 
+    # pylint: disable=too-many-locals
     def test_recursive_dir_different_out_dir_mode_one(self, tmp_path):
         """Test multiple sets of files in a recursive directory structure and a
         flat output directory."""
-        sg_dir, _1, sg_exts = make_files(tmp_path, "some game")
-        sog_dir, _1, sog_exts = make_files(sg_dir, "some other game")
-        soog_dir, _1, soog_exts = make_files(sg_dir, "some other other game")
-        sooog_dir, _1, sooog_exts = make_files(soog_dir, "some other other other game")
-        out_dir = tmp_path / "processed_game"
-        out_dir.mkdir()
+        in_path = tmp_path / "input_games"
+        in_path.mkdir()
+        game1_name = "some game"
+        game2_name = "some other game"
+        game3_name = "some other other game"
+        game4_name = "some other other other game"
+        game1_path, game1_in_file_names, exts1 = make_files(in_path, game1_name)
+        game2_path, game2_in_file_names, exts2 = make_files(game1_path, game2_name)
+        game3_path, game3_in_file_names, exts3 = make_files(game2_path, game3_name)
+        _, game4_in_file_names, exts4 = make_files(game3_path, game4_name)
+        out_path = tmp_path / "processed_games"
+        out_path.mkdir()
 
-        # gdipak.pack_gdi(sg_dir, out_dir, RecursiveMode.FLATTEN_STRUCTURE)
-
-        check_files((out_dir / sg_dir.name), sg_exts)
-        check_files((out_dir / sog_dir.name), sog_exts)
-        check_files((out_dir / soog_dir.name), soog_exts)
-        check_files((out_dir / sooog_dir.name), sooog_exts)
+        cli.main(
+            ["gdipak", "-i", str(in_path), "-o", str(out_path), "-m", "copy", "-r", "1"]
+        )
+        games_data = []
+        games_data.append(GameData(game1_name, exts1, game1_in_file_names))
+        games_data.append(GameData(game2_name, exts2, game2_in_file_names))
+        games_data.append(GameData(game3_name, exts3, game3_in_file_names))
+        games_data.append(GameData(game4_name, exts4, game4_in_file_names))
+        check_games(games_data, out_path)
 
     # pylint: disable=too-many-locals
     def test_recursive_dir_different_out_dir_mode_zero(self, tmp_path):
         """Test multiple sets of files in a recursive directory structure and an
         output directory structure the mirrors the input structure."""
-        sg_dir, _1, sg_exts = make_files(tmp_path, "some game")
-        sog_dir, _1, sog_exts = make_files(sg_dir, "some other game")
-        soog_dir, _1, soog_exts = make_files(sg_dir, "some other other game")
-        sooog_dir, _1, sooog_exts = make_files(soog_dir, "some other other other game")
-        out_dir = tmp_path / "processed_game"
-        out_dir.mkdir()
-        # gdipak.pack_gdi(sg_dir, out_dir, RecursiveMode.PRESERVE_STRUCTURE)
+        in_path = tmp_path / "input_games"
+        in_path.mkdir()
+        game1_name = "some game"
+        game2_name = "some other game"
+        game3_name = "some other other game"
+        game4_name = "some other other other game"
+        game1_path, game1_in_file_names, exts1 = make_files(in_path, game1_name)
+        game2_path, game2_in_file_names, exts2 = make_files(game1_path, game2_name)
+        game3_path, game3_in_file_names, exts3 = make_files(game2_path, game3_name)
+        _, game4_in_file_names, exts4 = make_files(game3_path, game4_name)
+        out_path = tmp_path / "processed_games"
+        out_path.mkdir()
 
-        sg_dir_path = out_dir / sg_dir.name
-        check_files(sg_dir_path, sg_exts)
-        sog_dir_path = sg_dir_path / sog_dir.name
-        check_files(sog_dir_path, sog_exts)
-        soog_dir_path = sg_dir_path / soog_dir.name
-        check_files(soog_dir_path, soog_exts)
-        sooog_dir_path = soog_dir_path / sooog_dir.name
-        check_files(sooog_dir_path, sooog_exts)
+        cli.main(
+            ["gdipak", "-i", str(in_path), "-o", str(out_path), "-m", "copy", "-r", "0"]
+        )
+        games_data = [GameData(game1_name, exts1, game1_in_file_names)]
+        check_games(games_data, out_path, fail_on_non_dirs=False)
+        games_data = [GameData(game2_name, exts2, game2_in_file_names)]
+        out_path = out_path / game1_name
+        check_games(games_data, out_path, fail_on_non_dirs=False)
+        games_data = [GameData(game3_name, exts3, game3_in_file_names)]
+        out_path = out_path / game2_name
+        check_games(games_data, out_path, fail_on_non_dirs=False)
+        games_data = [GameData(game4_name, exts4, game4_in_file_names)]
+        out_path = out_path / game3_name
+        check_games(games_data, out_path, fail_on_non_dirs=False)
 
     def test_missing_gdi_file(self, tmp_path):
         """Tests a set of files that does not include the gdi file."""
         name = "mygame"
-        dir_path, _1, _2 = make_files(tmp_path, name)
-        gdi_path = Path(dir_path) / (name + ".gdi")
+        path, _1, _2 = make_files(tmp_path, name)
+        gdi_path = path / (name + ".gdi")
         gdi_path.unlink()
-        with pytest.raises(ValueError):
-            pass  # gdipak.pack_gdi(dir_path, dir_path)
+        with pytest.raises(ValueError) as ex:
+            cli.main(["gdipak", "-i", str(path), "-o", str(path), "-m", "modify"])
+        assert "Directory does not contain a gdi file" in str(ex.value)
 
     def test_too_many_gdi_files(self, tmp_path):
         """Tests a set of files with more than one gdi file."""
         name = "mygame"
-        dir_path, _1, _2 = make_files(tmp_path, name)
-        impostor_file = dir_path / "who put this file here.gdi"
+        path, _1, _2 = make_files(tmp_path, name)
+        impostor_file = path / "who put this file here.gdi"
         impostor_file.touch()
-        with pytest.raises(ValueError):
-            pass  # gdipak.pack_gdi(dir_path, dir_path)
+        with pytest.raises(ValueError) as ex:
+            cli.main(["gdipak", "-i", str(path), "-o", str(path), "-m", "modify"])
+        assert "Directory contains more than one gdi file" in str(ex.value)

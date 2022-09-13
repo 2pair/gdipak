@@ -91,7 +91,7 @@ class TestGetSubdirsInDir:
         """Test when there are no directories."""
         tmp_path = tmp_path / "basedir"
         tmp_path.mkdir()
-        dirs = file_utils.get_sub_dirs_in_dir(tmp_path)
+        dirs = file_utils.get_subdirs_in_dir(tmp_path)
         assert len(dirs) == 0
 
     def test_dirs(self, tmp_path):
@@ -100,7 +100,7 @@ class TestGetSubdirsInDir:
         sub1.mkdir(parents=True)
         sub2 = tmp_path / "basedir" / "subdir1"
         sub2.mkdir(parents=True)
-        dirs = file_utils.get_sub_dirs_in_dir(tmp_path / "basedir")
+        dirs = file_utils.get_subdirs_in_dir(tmp_path / "basedir")
         assert len(dirs) == 2
         assert sub1 in dirs
         assert sub2 in dirs
@@ -111,34 +111,34 @@ class TestGetSubdirsInDir:
         sub1.mkdir(parents=True)
         sub2 = tmp_path / "basedir" / "subdir1"
         sub2.mkdir(parents=True)
-        dirs = file_utils.get_sub_dirs_in_dir(str(tmp_path / "basedir"))
+        dirs = file_utils.get_subdirs_in_dir(str(tmp_path / "basedir"))
         assert len(dirs) == 2
         assert sub1 in dirs
         assert sub2 in dirs
 
-    def test_sub_dirs_recursive(self, tmp_path):
+    def test_subdirs_recursive(self, tmp_path):
         """Test when there are sub directories."""
         base = tmp_path / "basedir"
         base.mkdir()
-        sub_dirs = create_dirs_in_dir(base, count=2)
-        sub_dirs.extend(create_dirs_in_dir(Path(sub_dirs[0]), count=2, start_index=2))
-        sub_dirs.extend(create_dirs_in_dir(Path(sub_dirs[2]), count=2, start_index=4))
-        out_dirs = file_utils.get_sub_dirs_in_dir(str(base))
+        subdirs = create_dirs_in_dir(base, count=2)
+        subdirs.extend(create_dirs_in_dir(Path(subdirs[0]), count=2, start_index=2))
+        subdirs.extend(create_dirs_in_dir(Path(subdirs[2]), count=2, start_index=4))
+        out_dirs = file_utils.get_subdirs_in_dir(str(base))
         assert len(out_dirs) == 6
-        for out_dir, sub_dir in zip(sorted(out_dirs), sorted(sub_dirs)):
-            assert out_dir.samefile(sub_dir)
+        for out_dir, subdir in zip(sorted(out_dirs), sorted(subdirs)):
+            assert out_dir.samefile(subdir)
 
-    def test_sub_dirs_recursive_with_max_recursion(self, tmp_path):
+    def test_subdirs_recursive_with_max_recursion(self, tmp_path):
         """Test when there are sub directories and a recursion limit."""
         base = tmp_path / "basedir"
         base.mkdir()
-        sub_dirs = create_dirs_in_dir(base, count=2)
-        sub_dirs.extend(create_dirs_in_dir(Path(sub_dirs[0]), count=2, start_index=2))
-        sub_dirs.extend(create_dirs_in_dir(Path(sub_dirs[2]), count=2, start_index=4))
-        dirs = file_utils.get_sub_dirs_in_dir(str(base), 1)
+        subdirs = create_dirs_in_dir(base, count=2)
+        subdirs.extend(create_dirs_in_dir(Path(subdirs[0]), count=2, start_index=2))
+        subdirs.extend(create_dirs_in_dir(Path(subdirs[2]), count=2, start_index=4))
+        dirs = file_utils.get_subdirs_in_dir(str(base), 1)
         assert len(dirs) == 4
-        for out_dir, sub_dir in zip(sorted(dirs), sorted(sub_dirs[:4])):
-            assert out_dir.samefile(sub_dir)
+        for out_dir, subdir in zip(sorted(dirs), sorted(subdirs[:4])):
+            assert out_dir.samefile(subdir)
 
 
 class TestGetGameFilesInDir:
