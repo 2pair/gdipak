@@ -57,11 +57,12 @@ class TestGdiGenerator:
             gdi_lines_b = gdi_b.splitlines()
             track_count_b = int(gdi_lines_b[0].strip())
             if track_count_b == 2:
-                continue
+                continue  # pragma: no cover
             if line_end_a != line_end_b and track_count_a != track_count_b:
                 break
         else:
-            assert False
+            # In the unlikely event the above failed, fail more
+            raise AssertionError
 
         line_a = gdi_lines_a[2]
         line_b = gdi_lines_b[2]

@@ -14,3 +14,16 @@ omit=
 
 [html]
 directory = coverage_html_report
+
+[report]
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+
+    # Don't complain if tests don't hit defensive assertion code:
+    raise AssertionError
+    raise NotImplementedError
+    # Don't complain about abstract methods, they aren't run:
+    if __name__ == .__main__.:
+    # Don't complain about abstract methods, they aren't run:
+    @(abc\.)?abstractmethod

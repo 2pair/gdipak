@@ -209,11 +209,12 @@ def check_file_name(file: str, dirname: str) -> str | None:
             if ext.lower() == ".raw":
                 return ".raw"
             return ".bin"
-        except ValueError:  # pragma: no cover
-            assert False
-    else:  # pragma: no cover
-        print("name was: " + name)
-        assert False
+        except ValueError as ex:  # pragma: no cover
+            # file was a raw or bin but didn't have a number after "track"
+            raise AssertionError from ex
+    else:
+        # Unknown extension
+        raise AssertionError
 
 
 def check_files(
@@ -237,8 +238,9 @@ def check_files(
                 exts[ext] += 1
         elif item.is_dir():
             continue
-        else:  # pragma: no cover
-            assert False
+        else:
+            # Item is not a file or directory
+            raise AssertionError
 
     for count in exts.values():
         assert count > 0
@@ -263,7 +265,7 @@ def check_games(
     for subdir in base_path.iterdir():
         if not subdir.is_dir():
             if fail_on_non_dirs:
-                assert False
+                raise AssertionError
             continue
         for game_data in games_data:
             if subdir.name != game_data.name:
@@ -276,7 +278,8 @@ def check_games(
             found_count += 1
             break
         else:
-            assert False
+            # directory name was not a game name
+            raise AssertionError
     assert len(games_data) == found_count
 
 

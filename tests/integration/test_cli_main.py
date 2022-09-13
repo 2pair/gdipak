@@ -31,14 +31,14 @@ class TestPackGdi:
 
     def test_single_dir_different_out_dir(self, tmp_path):
         """Test creating the output in a separate directory."""
-        in_dir, in_file_names, exts = make_files(tmp_path, "mygame")
+        in_dir, _in_file_names, exts = make_files(tmp_path, "mygame")
         out_dir = tmp_path / "processed_game"
         out_dir.mkdir()
         cli.main(["gdipak", "-i", str(in_dir), "-o", str(out_dir), "-m", "modify"])
 
-        # src files didn't change
-        for item in in_dir.iterdir():
-            assert item.name in in_file_names
+        # src files no longer exist
+        remaining_files = list(in_dir.iterdir())
+        assert len(remaining_files) == 0
         check_files(out_dir, exts)
 
     def test_recursive_dir_same_out_dir_copy(self, tmp_path):
