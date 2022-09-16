@@ -17,11 +17,12 @@ class TestGdiGenerator:
         line_end = "\r\n"
         generator = GdiGenerator(name, exts, offsets, game_number, line_end)
         gdi, metadata = generator()
-        assert metadata["name"] == name
-        assert metadata["game_num"] == game_number
-        assert metadata["offsets"] == offsets
-        assert metadata["extensions"] == exts
-        assert metadata["line_end"] == line_end
+        assert metadata.name == name
+        assert metadata.num_tracks == len(exts)
+        assert metadata.game_num == game_number
+        assert metadata.offsets == offsets
+        assert metadata.extensions == exts
+        assert metadata.line_end == line_end
         gdi_lines = gdi.splitlines(True)
         # Extra line because first line has the track count
         assert len(gdi_lines) == (len(offsets) + 1)

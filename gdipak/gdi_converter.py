@@ -128,11 +128,16 @@ class GdiConverter:
         output_contents = ""
         lines = file_contents.splitlines(True)
         for index, line in enumerate(lines):
+            if index == 0:
+                output_contents += line  # First line holds track count
+                continue
             start_quote_index = line.find('"')
             end_quote_index = line.rfind('"')
             # Line without a file name
             if start_quote_index == -1 and end_quote_index == -1:
-                continue
+                raise ValueError(
+                    f"Line {index + 1} does not reference a quoted file name."
+                )
             # Invalid Line
             if start_quote_index == end_quote_index:
                 raise ValueError(

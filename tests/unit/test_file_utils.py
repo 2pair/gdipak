@@ -278,7 +278,7 @@ class TestTransposePath:
         local_game_dir = Path("breakfast games") / "Egg Monger II"
         game_dir = in_dir / local_game_dir
         out_dir = tmp_path / "output"
-        return self.GamePaths(in_dir, local_game_dir, game_dir, out_dir)
+        yield self.GamePaths(in_dir, local_game_dir, game_dir, out_dir)
 
     def test_paths_and_preserve_mode(self, game_paths):
         """Test passing arguments as Paths."""

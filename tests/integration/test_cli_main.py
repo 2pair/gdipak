@@ -6,8 +6,8 @@ from tests.testing_utils import make_files, check_files, check_games, GameData
 import gdipak.__main__ as cli
 
 
-class TestPackGdi:
-    """Test building the GDI format files."""
+class TestCliMain:
+    """Test building the GDI format files from the CLI."""
 
     def test_single_dir_same_out_dir_modify(self, tmp_path):
         """Test in a single directory, dont create the namefile."""

@@ -13,6 +13,7 @@ from tests.testing_utils import GdiGenerator
 def generate_random_gdi_file():
     """Generates a random GDI file and associated metadata."""
     charset = string.ascii_letters + string.digits + string.punctuation + " "
+    charset = charset.replace('"', "")  # No double quotes
     name = ""
     for _ in range(randint(10, 128)):
         name += charset[randint(0, len(charset) - 1)]
@@ -122,38 +123,65 @@ class TestGdiConverter:
 
     def test__replace_file_names_replace_file_names(self):
         """Tests replacing file names with the new naming convention."""
-        contents = "1 0 4 2252 Fella's Guys (Jp) (Track 1).bin\" 0\n"
+        contents = "1\n1 0 4 2252 Fella's Guys (Jp) (Track 1).bin\" 0\n"
         with pytest.raises(ValueError) as ex:
             GdiConverter(file_contents="1")._replace_file_names(contents)
         assert (
-            "Line 1 only contains a single quote, "
+            "Line 2 only contains a single quote, "
             "file names should be between two quotes." in str(ex.value)
         )
+
+    def test__replace_file_names_no_quotes(self):
+        """Tests replacing file names with the new naming convention."""
+        contents = "1\n1 0 4 2252 Fella's Guys (Jp) (Track 1).bin 0\n"
+        with pytest.raises(ValueError) as ex:
+            GdiConverter(file_contents="1")._replace_file_names(contents)
+        assert "Line 2 does not reference a quoted file name." in str(ex.value)
 
     def test__replace_file_names(self):
         """Tests replacing file names with the new naming convention."""
         contents = (
+            "12\n"
             '1 0 4 2252 "Fella\'s Guys (Jp) (Track 1).bin" 0\n'
             '2 600 0 2252 "Fella\'s Guys (Jp) (Track 2).bin" 0\r\n'
             '10 1200 4 2252 "Fella\'s Guys (Jp) (Track 10).bin" 0\n'
         )
         output = GdiConverter(file_contents="1")._replace_file_names(contents)
         assert output == (
+            "12\n"
             '1 0 4 2252 "track01.bin" 0\n'
             '2 600 0 2252 "track02.bin" 0\r\n'
             '10 1200 4 2252 "track10.bin" 0\n'
         )
 
-    def test_convert_gdi(self, tmpdir, gdi_file):
+    # pylint: disable=too-many-locals
+    def test_convert_gdi(self, tmp_path, gdi_file):
         """Tests converting a GDI file into the output format."""
         file_content = gdi_file[0]
         file_metadata = gdi_file[1]
-        file_name = file_metadata["name"].replace("/", "_")
-        file_path = tmpdir.join(file_name)
-        with open(file_path, "w", encoding="UTF-8"):
-            file_path.write(file_content)
+        file_path = tmp_path / "game.gdi"
+        file_path.touch()
+        file_path.write_text(file_content, encoding="UTF-8")
         gdi_converter = GdiConverter(file_path=file_path)
         gdi_converter.convert_file()
-        # TODO: Finish writing this test. Need to parse the contents I guess...
-        # Maybe see about generalizing the other parser that validates the
-        # Generated GDI.
+
+        converted_file = file_path.read_text()
+        converted_lines = converted_file.splitlines()
+        num_tracks = int(converted_lines[0])
+
+        assert num_tracks == file_metadata.num_tracks
+        assert len(converted_lines) == (num_tracks + 1)  # + 1st line
+
+        for index, line in enumerate(converted_lines[1:]):
+            assert line[0] != " "  # initial spaces have been removed
+            parts = line.split()
+            assert len(parts) == 6
+            track_num, offset, four_oh, game_num, track, zero = parts
+            assert int(track_num) == index + 1
+            assert int(offset) == file_metadata.offsets[index]
+            assert int(four_oh) == 4 * ((index + 1) % 2)
+            assert int(game_num) == file_metadata.game_num
+            track_name, ext = track.strip('"').split(".")
+            assert "track" in track_name
+            assert ext == file_metadata.extensions[index]
+            assert zero == "0"

@@ -12,6 +12,10 @@ from typing import Dict, List, Tuple
 class GdiGenerator:
     """Creates the contents of a GDI file as it is before being converted."""
 
+    MetaData = namedtuple(
+        "MetaData", "name num_tracks game_num offsets extensions line_end"
+    )
+
     split_on_nums_regex = re.compile(r"(\d+)")
 
     # pylint: disable=too-many-arguments
@@ -73,13 +77,14 @@ class GdiGenerator:
             self._make_gdi_contents(
                 self.game_name, track_offsets, track_exts, game_num, line_end
             ),
-            {
-                "name": self.game_name,
-                "game_num": game_num,
-                "offsets": track_offsets,
-                "extensions": track_exts,
-                "line_end": line_end,
-            },
+            self.MetaData(
+                self.game_name,
+                num_tracks,
+                game_num,
+                track_offsets,
+                track_exts,
+                line_end,
+            ),
         )
 
     @staticmethod
