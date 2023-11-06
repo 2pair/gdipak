@@ -1,6 +1,6 @@
 black
-flake8
 bandit
+coverage
 pylint
 pytest
-coverage
+ruff

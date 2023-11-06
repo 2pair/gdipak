@@ -6,6 +6,6 @@ test:
 .PHONY: lint
 lint:
 	black gdipak tests
-	flake8 gdipak tests
+	ruff gdipak tests
 	bandit -b ".bandit_baseline" -r *.py gdipak
 	pylint gdipak tests
